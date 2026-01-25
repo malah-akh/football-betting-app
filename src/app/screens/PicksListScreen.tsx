@@ -8,7 +8,6 @@ import { PremiumCard } from "@/app/components/PremiumCard";
 import { UnlockPremiumCard } from "@/app/components/UnlockPremiumCard";
 import { BottomNav } from "@/app/components/BottomNav";
 import { PickConfirmationModal } from "@/app/components/PickConfirmationModal";
-import { SlidersHorizontal, Calendar } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/app/context/AuthContext";
 import { formatMatchTime } from "@/app/components/ui/utils";
