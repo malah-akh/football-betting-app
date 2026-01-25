@@ -219,23 +219,46 @@ export function AddTipDialog({ match, existingTip, onSave }: AddTipDialogProps) 
             </Select>
           </div>
 
+          {/* Structured Market Inputs */}
+          {(market.includes("Over") || market.includes("Under") || market.includes("Handicap") || market.includes("Goals")) && (
+             <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="line" className="text-right">Line</Label>
+              <Input
+                id="line"
+                type="number" 
+                step="0.25"
+                value={line}
+                onChange={(e) => setLine(e.target.value)}
+                placeholder="2.5, -1.0..."
+                className="col-span-3"
+              />
+            </div>
+          )}
+          
           <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="selection" className="text-right">
-              Selection
-            </Label>
-            <Input
-              id="selection"
-              value={selection}
-              onChange={(e) => setSelection(e.target.value)}
-              placeholder="e.g. Home Win"
-              className="col-span-3"
-              required
-            />
+            <Label htmlFor="side" className="text-right">Selection</Label>
+             <div className="col-span-3 flex gap-2">
+                <Input
+                  id="side"
+                  value={side}
+                  onChange={(e) => setSide(e.target.value)}
+                  placeholder="Side (Over, Home...)"
+                  className="w-1/3"
+                />
+                <Input
+                  id="selection"
+                  value={selection}
+                  onChange={(e) => setSelection(e.target.value)}
+                  placeholder="Full Selection Name (required)"
+                  className="w-2/3"
+                  required
+                />
+             </div>
           </div>
 
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="odds" className="text-right">
-              Odds
+              Odds @ Release
             </Label>
             <div className="col-span-3 flex gap-2">
               <Input
@@ -244,22 +267,30 @@ export function AddTipDialog({ match, existingTip, onSave }: AddTipDialogProps) 
                 step="0.01"
                 value={odds}
                 onChange={(e) => setOdds(e.target.value)}
-                placeholder="1.50"
+                placeholder="2.00"
                 required
                 className="flex-1"
               />
-              <Input
+               <div className="flex items-center justify-center px-3 bg-muted rounded text-xs text-muted-foreground whitespace-nowrap min-w-[80px]">
+                  Implied: {impliedProbPercent.toFixed(1)}%
+               </div>
+            </div>
+          </div>
+          
+           <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="bookmaker" className="text-right">Bookmaker</Label>
+             <Input
+                id="bookmaker"
                 value={bookmaker}
                 onChange={(e) => setBookmaker(e.target.value)}
-                placeholder="Bookie (e.g. Bet365)"
-                className="flex-1"
+                placeholder="e.g. Bet365"
+                className="col-span-3"
               />
-            </div>
           </div>
 
           <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="realProbability" className="text-right">
-              Prob & Value
+            <Label htmlFor="realProbability" className="text-right font-bold text-primary">
+              My Probability
             </Label>
             <div className="col-span-3 flex items-center gap-2">
                <div className="relative flex-1">
@@ -271,25 +302,30 @@ export function AddTipDialog({ match, existingTip, onSave }: AddTipDialogProps) 
                   max="100"
                   value={realProbability}
                   onChange={(e) => setRealProbability(e.target.value)}
-                  placeholder="True Prob %"
-                  className="pr-8"
+                  placeholder="55"
+                  className="pr-8 font-bold"
                 />
                 <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">%</span>
                </div>
                
-               {valueEdge !== null && (
-                 <div className={`flex flex-col justify-center items-center text-xs h-9 px-3 rounded border ${
-                    isValueBet 
+               <div className={`flex flex-col justify-center items-center text-xs h-9 px-3 rounded border w-36 ${
+                    isPositiveEV 
                       ? 'bg-green-100 border-green-300 text-green-800' 
                       : 'bg-red-50 border-red-200 text-red-800'
                   }`}>
                    <span className="font-bold">
-                     EDGE: {parseFloat(valueEdge) > 0 ? '+' : ''}{(parseFloat(valueEdge) * 100).toFixed(1)}%
+                     EDGE: {edgeRaw > 0 ? '+' : ''}{edgePercent.toFixed(1)}%
                    </span>
                  </div>
-               )}
             </div>
           </div>
+          
+          {!isPositiveEV && edgePercent > -100 && (
+             <div className="col-span-4 bg-red-50 border border-red-200 text-red-700 px-4 py-2 rounded text-sm text-center">
+                ⛔️ <strong>No Edge Detected.</strong> Tip cannot be saved.<br/>
+                Your probability must be higher than {(impliedProbPercent).toFixed(1)}%.
+             </div>
+          )}
 
           <div className="grid grid-cols-4 items-center gap-4">
             <Label className="text-right">Stake ({stake})</Label>
@@ -355,7 +391,7 @@ export function AddTipDialog({ match, existingTip, onSave }: AddTipDialogProps) 
             </div>
           </div>
           <DialogFooter>
-            <Button type="submit" disabled={loading}>
+            <Button type="submit" disabled={loading || !isPositiveEV}>
               {loading ? "Saving..." : "Save Tip"}
             </Button>
           </DialogFooter>
