@@ -27,7 +27,6 @@ import { Slider } from "@/app/components/ui/slider";
 import {
   Tooltip,
   TooltipContent,
-  TooltipProvider,
   TooltipTrigger,
 } from "@/app/components/ui/tooltip";
 import { Info } from "lucide-react";
@@ -39,18 +38,16 @@ interface AddTipDialogProps {
 }
 
 const InfoTooltip = ({ content }: { content: string }) => (
-  <TooltipProvider>
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <span className="inline-flex cursor-help">
-          <Info className="h-3 w-3 text-muted-foreground/70 hover:text-primary" />
-        </span>
-      </TooltipTrigger>
-      <TooltipContent>
-        <p className="max-w-[200px] text-xs font-normal">{content}</p>
-      </TooltipContent>
-    </Tooltip>
-  </TooltipProvider>
+  <Tooltip>
+    <TooltipTrigger asChild>
+      <span className="inline-flex cursor-help">
+        <Info className="h-3 w-3 text-muted-foreground/70 hover:text-primary" />
+      </span>
+    </TooltipTrigger>
+    <TooltipContent>
+      <p className="max-w-[200px] text-xs font-normal">{content}</p>
+    </TooltipContent>
+  </Tooltip>
 );
 
 export function AddTipDialog({ match, existingTip, onSave }: AddTipDialogProps) {
