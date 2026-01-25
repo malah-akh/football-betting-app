@@ -29,6 +29,7 @@ interface MatchCardProps {
     stake?: number;
     confidence?: number;
     bookmaker?: string;
+    value_edge?: number; // Added for probability model
   };
   isUserPremium?: boolean;
 }
@@ -167,8 +168,13 @@ export function MatchCard({
                            {tip.market && <span className="text-[10px] uppercase tracking-wider font-normal text-slate-500 mb-0.5">{tip.market}</span>}
                            <span>{tip.selection}</span>
                         </div>
-                        <div className="flex flex-col items-end">
+                        <div className="flex flex-col items-end gap-1">
                             <span className="bg-white px-2 py-0.5 rounded shadow-sm text-xs">@{typeof tip.odds === 'number' ? tip.odds.toFixed(2) : '-'}</span>
+                             {tip.value_edge !== undefined && tip.value_edge > 0 && (
+                                <span className="text-[9px] uppercase font-bold text-green-700 bg-green-100 px-1.5 py-0.5 rounded border border-green-200" title="Expected Value (Edge)">
+                                    +{(tip.value_edge * 100).toFixed(1)}% Val
+                                </span>
+                            )}
                         </div>
                     </div>
 

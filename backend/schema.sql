@@ -102,9 +102,27 @@ create trigger on_auth_user_created
 create table public.tips (
   id uuid default uuid_generate_v4() primary key,
   match_id uuid references public.matches(id) not null,
-  selection text not null, -- e.g. "Arsenal to Win", "Over 2.5 Goals"
+  
+  -- Core Bet Info
+  market text not null default 'Match Winner',
+  selection text not null, 
   odds decimal not null,
+  
+  -- Money Management (Bankroll logic)
+  stake integer not null default 1 check (stake >= 1 and stake <= 10),
+  
+  -- Logic & Value (The Edge)
+  confidence integer not null default 0 check (confidence >= 0 and confidence <= 100),
+  real_probability decimal check (real_probability > 0 and real_probability <= 1),
+  value_edge decimal,
+  closing_odds decimal,
+  
+  -- Content
   analysis text,
+  content jsonb default '{}'::jsonb,
+  bookmaker text,
+  
+  -- Meta
   is_premium boolean default true,
   status text default 'PENDING', -- 'PENDING', 'WON', 'LOST', 'VOID'
   created_at timestamp with time zone default timezone('utc'::text, now()) not null

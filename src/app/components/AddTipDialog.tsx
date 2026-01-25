@@ -44,22 +44,33 @@ export function AddTipDialog({ match, existingTip, onSave }: AddTipDialogProps) 
   const [stake, setStake] = useState([existingTip?.stake || 1]);
   const [confidence, setConfidence] = useState([existingTip?.confidence || 75]);
   const [bookmaker, setBookmaker] = useState(existingTip?.bookmaker || "");
+  const [realProbability, setRealProbability] = useState(
+    existingTip?.real_probability ? (existingTip.real_probability * 100).toString() : ""
+  );
   const [keyFactors, setKeyFactors] = useState(
     existingTip?.content?.keyFactors?.join("\n") || ""
   );
+
+  // Derived Value Calculation
+  const parsedOdds = parseFloat(odds);
+  const parsedProb = parseFloat(realProbability);
+  // (Odds * Prob) - 1. E.g. (2.00 * 0.55) - 1 = 1.1 - 1 = 0.10 (10% edge)
+  const valueEdge = !isNaN(parsedOdds) && !isNaN(parsedProb) 
+    ? ((parsedOdds * (parsedProb / 100)) - 1).toFixed(3)
+    : null;
+  const isValueBet = valueEdge && parseFloat(valueEdge) > 0;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-      const parsedOdds = parseFloat(odds);
       if (isNaN(parsedOdds)) {
         alert("Please enter valid numeric odds");
         setLoading(false);
         return;
       }
-
+      
       const tipData = {
         match_id: match.id,
         selection,
@@ -71,6 +82,8 @@ export function AddTipDialog({ match, existingTip, onSave }: AddTipDialogProps) 
         stake: stake[0],
         confidence: confidence[0],
         bookmaker,
+        real_probability: parsedProb ? parsedProb / 100 : null,
+        value_edge: valueEdge ? parseFloat(valueEdge) : null,
         content: {
           ...existingTip?.content,
           keyFactors: keyFactors.split("\n").filter((f: string) => f.trim() !== ""),
@@ -212,6 +225,40 @@ export function AddTipDialog({ match, existingTip, onSave }: AddTipDialogProps) 
                 placeholder="Bookie (e.g. Bet365)"
                 className="flex-1"
               />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="realProbability" className="text-right">
+              Prob & Value
+            </Label>
+            <div className="col-span-3 flex items-center gap-2">
+               <div className="relative flex-1">
+                <Input
+                  id="realProbability"
+                  type="number"
+                  step="0.1"
+                  min="0"
+                  max="100"
+                  value={realProbability}
+                  onChange={(e) => setRealProbability(e.target.value)}
+                  placeholder="True Prob %"
+                  className="pr-8"
+                />
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">%</span>
+               </div>
+               
+               {valueEdge !== null && (
+                 <div className={`flex flex-col justify-center items-center text-xs h-9 px-3 rounded border ${
+                    isValueBet 
+                      ? 'bg-green-100 border-green-300 text-green-800' 
+                      : 'bg-red-50 border-red-200 text-red-800'
+                  }`}>
+                   <span className="font-bold">
+                     EDGE: {parseFloat(valueEdge) > 0 ? '+' : ''}{(parseFloat(valueEdge) * 100).toFixed(1)}%
+                   </span>
+                 </div>
+               )}
             </div>
           </div>
 

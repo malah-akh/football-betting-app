@@ -75,3 +75,31 @@ export const InsertMatchSchema = z.object({
 });
 
 export type InsertMatch = z.infer<typeof InsertMatchSchema>;
+
+/**
+ * Validates a Tip to ensure it meets our "Value Betting" criteria.
+ */
+export const TipSchema = z.object({
+  id: z.string().uuid().optional(), // Optional for inserts
+  match_id: z.string().uuid(),
+  market: z.enum(["1X2", "Over/Under", "BTTS", "Asian Handicap", "Double Chance"]),
+  selection: z.string().min(1),
+  odds: z.number().positive(),
+  
+  // Money Management
+  stake: z.number().int().min(1).max(10),
+  
+  // The Edge logic
+  confidence: z.number().int().min(0).max(100),
+  real_probability: z.number().min(0).max(1).optional(), // Optional initially, but recommended
+  value_edge: z.number().optional(),
+  
+  // Content
+  analysis: z.string().min(10, "Analysis must be substantive"), // Enforce explanation
+  bookmaker: z.string().optional(),
+  is_premium: z.boolean().default(true),
+  status: z.enum(['PENDING', 'WON', 'LOST', 'VOID']).default('PENDING'),
+  created_at: z.string().datetime().optional()
+});
+
+export type Tip = z.infer<typeof TipSchema>;

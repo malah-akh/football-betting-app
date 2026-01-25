@@ -21,6 +21,7 @@ import {
 } from "@/app/components/ui/popover";
 import { BottomNav } from "@/app/components/BottomNav";
 import { Button } from "@/app/components/ui/button";
+import { AddTipDialog } from "@/app/components/AddTipDialog";
 
 const POPULAR_LEAGUES = [
   { name: "Premier League", country: "England" },
@@ -426,13 +427,14 @@ export function MissionControlScreen() {
                     </div>
                   )}
 
-                  {/* <div className="flex justify-end">
+                  {/* Tip Action Area */}
+                  <div className="flex justify-end mt-4 pt-4 border-t border-slate-100">
                     <AddTipDialog 
                         match={match} 
                         existingTip={tip} 
                         onSave={handleTipSaved} 
                     />
-                  </div> */}
+                  </div>
                 </CardContent>
               </Card>
             );
