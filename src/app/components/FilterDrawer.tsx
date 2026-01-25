@@ -13,15 +13,21 @@ import { Switch } from "@/app/components/ui/switch";
 import { Label } from "@/app/components/ui/label";
 import { ScrollArea } from "@/app/components/ui/scroll-area";
 import { cn } from "@/app/components/ui/utils";
+import { Search } from "lucide-react";
 
 export type MatchStatus = "ALL" | "LIVE" | "UPCOMING" | "FINISHED";
 
 export interface FilterState {
   status: MatchStatus;
-  country: string | null;
+  country: string[];
   league: string | null;
   hasTip: boolean;
   premiumOnly: boolean;
+}
+
+export interface LeagueOption {
+  name: string;
+  country: string;
 }
 
 interface FilterDrawerProps {
@@ -31,7 +37,7 @@ interface FilterDrawerProps {
   onApply: (newFilters: FilterState) => void;
   onReset: () => void;
   availableCountries: string[];
-  availableLeagues: string[];
+  availableLeagues: LeagueOption[];
 }
 
 export function FilterDrawer({
@@ -44,11 +50,43 @@ export function FilterDrawer({
   availableLeagues,
 }: FilterDrawerProps) {
   const [localFilters, setLocalFilters] = React.useState<FilterState>(currentFilters);
+  const [countrySearchQuery, setCountrySearchQuery] = React.useState("");
+  const [leagueSearchQuery, setLeagueSearchQuery] = React.useState("");
+  const [visibleLeaguesCount, setVisibleLeaguesCount] = React.useState(5);
+
+  const filteredCountries = React.useMemo(() => {
+    return availableCountries.filter((country) =>
+      country.toLowerCase().includes(countrySearchQuery.toLowerCase())
+    );
+  }, [availableCountries, countrySearchQuery]);
+
+  const filteredLeagues = React.useMemo(() => {
+    // Safety check for availableLeagues
+    if (!availableLeagues) return [];
+
+    // First, filter by selected countries in the local state
+    let leagues = availableLeagues;
+    if (localFilters.country.length > 0) {
+      leagues = leagues.filter((l) => l && l.country && localFilters.country.includes(l.country));
+    }
+    
+    // Then filter by search query
+    return leagues
+      .filter((l) => l && l.name && l.name.toLowerCase().includes(leagueSearchQuery.toLowerCase()))
+      .map(l => l.name); // Convert back to string[] for display
+  }, [availableLeagues, leagueSearchQuery, localFilters.country]);
+
+  const displayedLeagues = React.useMemo(() => {
+    return filteredLeagues.slice(0, visibleLeaguesCount);
+  }, [filteredLeagues, visibleLeaguesCount]);
 
   // Sync local state when drawer opens or currentFilters change externally
   React.useEffect(() => {
     if (open) {
       setLocalFilters(currentFilters);
+      setCountrySearchQuery(""); // Reset search on reopen
+      setLeagueSearchQuery(""); // Reset search on reopen
+      setVisibleLeaguesCount(5); // Reset paging on reopen
     }
   }, [open, currentFilters]);
 
@@ -68,7 +106,7 @@ export function FilterDrawer({
     // If we want to clear local state immediately for UX:
     setLocalFilters({
         status: "ALL",
-        country: null,
+        country: [],
         league: null,
         hasTip: false,
         premiumOnly: false,
@@ -80,10 +118,16 @@ export function FilterDrawer({
   };
 
   const toggleCountry = (country: string) => {
-    setLocalFilters((prev) => ({
-      ...prev,
-      country: prev.country === country ? null : country,
-    }));
+    setLocalFilters((prev) => {
+      const currentCountries = prev.country;
+      const isSelected = currentCountries.includes(country);
+      return {
+        ...prev,
+        country: isSelected
+          ? currentCountries.filter((c) => c !== country)
+          : [...currentCountries, country],
+      };
+    });
   };
 
   const toggleLeague = (league: string) => {
@@ -112,6 +156,7 @@ export function FilterDrawer({
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               {(["ALL", "LIVE", "UPCOMING", "FINISHED"] as MatchStatus[]).map((status) => (
                 <button
+                  type="button"
                   key={status}
                   onClick={() => toggleStatus(status)}
                   className={cn(
@@ -168,24 +213,36 @@ export function FilterDrawer({
             <h3 className="text-sm font-bold text-[#3e4855] uppercase tracking-wider">
               Country
             </h3>
-            <ScrollArea className="w-full whitespace-nowrap -mx-5 px-5">
-              <div className="flex w-max gap-3 pb-2">
-                {availableCountries.length > 0 ? availableCountries.map((country) => (
+            
+            {/* Country Search */}
+            <div className="relative">
+               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+               <input
+                 type="text"
+                 placeholder="Search countries..."
+                 value={countrySearchQuery}
+                 onChange={(e) => setCountrySearchQuery(e.target.value)}
+                 className="w-full pl-9 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3e4855]/20 focus:border-[#3e4855] transition-all"
+               />
+            </div>
+
+            <div className="flex flex-wrap gap-2">
+                {filteredCountries.length > 0 ? filteredCountries.map((country) => (
                   <button
+                    type="button"
                     key={country}
                     onClick={() => toggleCountry(country)}
                     className={cn(
-                      "px-5 py-2.5 rounded-full text-sm font-semibold transition-all border shadow-sm",
-                      localFilters.country === country
+                      "px-4 py-2 rounded-lg text-sm font-semibold transition-all border shadow-sm",
+                      localFilters.country.includes(country)
                         ? "bg-[#3e4855] text-white border-[#3e4855] shadow-md"
                         : "bg-white text-gray-600 border-gray-200 hover:border-gray-300"
                     )}
                   >
                     {country}
                   </button>
-                )) : <span className="text-sm text-gray-400 italic">No specific countries found</span>}
-              </div>
-            </ScrollArea>
+                )) : <span className="text-sm text-gray-400 italic w-full text-center py-2">No countries match your search</span>}
+            </div>
           </section>
 
           {/* League Section */}
@@ -195,30 +252,61 @@ export function FilterDrawer({
                 League
                 </h3>
                 {localFilters.league && (
-                    <button onClick={() => toggleLeague(localFilters.league!)} className="text-xs text-red-500 font-medium px-2">Clear</button>
+                    <button type="button" onClick={() => toggleLeague(localFilters.league!)} className="text-xs text-red-500 font-medium px-2">Clear</button>
                 )}
+            </div>
+
+            {/* League Search */}
+            <div className="relative">
+               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+               <input
+                 type="text"
+                 placeholder="Search leagues..."
+                 value={leagueSearchQuery}
+                 onChange={(e) => {
+                    setLeagueSearchQuery(e.target.value);
+                    setVisibleLeaguesCount(5); // Reset visible count on search
+                 }}
+                 className="w-full pl-9 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3e4855]/20 focus:border-[#3e4855] transition-all"
+               />
             </div>
             
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden divide-y divide-gray-50">
-              {availableLeagues.length > 0 ? availableLeagues.map((league) => (
-                <button
-                  key={league}
-                  onClick={() => toggleLeague(league)}
-                  className={cn(
-                    "w-full text-left px-5 py-3.5 text-sm transition-colors flex items-center justify-between group",
-                    localFilters.league === league
-                      ? "bg-slate-50 text-[#3e4855] font-bold"
-                      : "text-gray-600 hover:bg-gray-50"
+              {displayedLeagues.length > 0 ? (
+                <>
+                  {displayedLeagues.map((league) => (
+                    <button
+                      type="button"
+                      key={league}
+                      onClick={() => toggleLeague(league)}
+                      className={cn(
+                        "w-full text-left px-5 py-3.5 text-sm transition-colors flex items-center justify-between group",
+                        localFilters.league === league
+                          ? "bg-slate-50 text-[#3e4855] font-bold"
+                          : "text-gray-600 hover:bg-gray-50"
+                      )}
+                    >
+                      <span className="truncate pr-4">{league}</span>
+                      {localFilters.league === league && (
+                        <div className="w-2.5 h-2.5 rounded-full bg-[#3e4855]" />
+                      )}
+                    </button>
+                  ))}
+                  {displayedLeagues.length < filteredLeagues.length && (
+                      <button 
+                        type="button"
+                        onClick={() => setVisibleLeaguesCount(prev => prev + 10)}
+                        className="w-full py-3 text-xs font-semibold text-[#3e4855] bg-gray-50 hover:bg-gray-100 transition-colors"
+                      >
+                        Show More ({filteredLeagues.length - displayedLeagues.length})
+                      </button>
                   )}
-                >
-                  <span className="truncate pr-4">{league}</span>
-                  {localFilters.league === league && (
-                    <div className="w-2.5 h-2.5 rounded-full bg-[#3e4855]" />
-                  )}
-                </button>
-              )) : (
+                </>
+              ) : (
                 <div className="p-4 text-center text-sm text-gray-400 italic">
-                  {localFilters.country ? "No leagues found for this country." : "Select active matches to see leagues."}
+                  {availableLeagues.length === 0 
+                     ? (localFilters.country.length > 0 ? "No leagues found for selected countries." : "Select active matches to see leagues.") 
+                     : "No leagues match your search."}
                 </div>
               )}
             </div>

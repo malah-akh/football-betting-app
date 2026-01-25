@@ -22,7 +22,7 @@ export function HomeScreen() {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [filters, setFilters] = useState<FilterState>({
     status: "ALL",
-    country: null,
+    country: [],
     league: null,
     hasTip: false,
     premiumOnly: false,
@@ -164,6 +164,9 @@ export function HomeScreen() {
       if (data) {
          // Map DB schema to UI schema
         const mappedMatches = data.map((m: any) => {
+          // Robustly handle leagues relation (object or array)
+          const leagueData = Array.isArray(m.leagues) ? m.leagues[0] : m.leagues;
+
           // Extract odds
           const matchOdds = m.odds && m.odds.length > 0 
             ? {
@@ -175,10 +178,10 @@ export function HomeScreen() {
 
           return {
             id: m.id,
-            league: m.leagues?.name || 'Unknown League',
-            country: m.leagues?.country || 'International',
-            leagueLogo: m.leagues?.logo_url,
-            location: m.venue?.city ? `${m.venue.city}, ${m.venue.name || ''}` : (m.leagues?.country || 'Unknown Location'),
+            league: leagueData?.name || 'Unknown League',
+            country: leagueData?.country || 'International',
+            leagueLogo: leagueData?.logo_url,
+            location: m.venue?.city ? `${m.venue.city}, ${m.venue.name || ''}` : (leagueData?.country || 'Unknown Location'),
             time: formatMatchTime(m.start_time),
             status: m.status,
             homeTeam: m.home_team?.name || 'Home Team',
@@ -215,7 +218,7 @@ export function HomeScreen() {
         if (allowed && !allowed.includes(s)) return false;
       }
       
-      if (filters.country && match.country !== filters.country) return false;
+      if (filters.country.length > 0 && !filters.country.includes(match.country)) return false;
       if (filters.league && match.league !== filters.league) return false;
       if (filters.hasTip && !match.tip) return false;
       if (filters.premiumOnly) {
@@ -230,12 +233,16 @@ export function HomeScreen() {
   }, [matches]);
 
   const availableLeagues = useMemo(() => {
-    return Array.from(new Set(
-      matches
-        .filter(m => !filters.country || m.country === filters.country)
-        .map(m => m.league)
-    )).sort();
-  }, [matches, filters.country]);
+    const leaguesMap = new Map<string, string>(); // league -> country
+    matches.forEach(m => {
+      // Use original country data, not filtered
+      leaguesMap.set(m.league, m.country || "International");
+    });
+    
+    return Array.from(leaguesMap.entries())
+      .map(([name, country]) => ({ name, country }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }, [matches]);
 
   const displayedMatches = useMemo(() => {
     return filteredMatches.slice(0, page * 10);

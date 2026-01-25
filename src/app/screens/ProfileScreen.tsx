@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router";
 import { Header } from "@/app/components/Header";
 import { BottomNav } from "@/app/components/BottomNav";
+import { PremiumModal } from "@/app/components/PremiumModal";
+import { SubscriptionDetailsModal } from "@/app/components/SubscriptionDetailsModal";
 import { useAuth } from "@/app/context/AuthContext";
 import { supabase } from "@/lib/supabase";
 import {
@@ -13,12 +15,17 @@ import {
   HelpCircle,
   LogOut,
   ChevronRight,
+  CreditCard
 } from "lucide-react";
 
 export function ProfileScreen() {
   const navigate = useNavigate();
   const { profile, user, signOut } = useAuth();
   const [totalBets, setTotalBets] = useState(0);
+  const [winRate, setWinRate] = useState(0);
+  const [points, setPoints] = useState(0);
+  const [isPremiumModalOpen, setIsPremiumModalOpen] = useState(false);
+  const [isSubscriptionDetailsOpen, setIsSubscriptionDetailsOpen] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -29,12 +36,38 @@ export function ProfileScreen() {
   async function fetchStats() {
     if (!user) return;
     try {
-      const { count } = await supabase
+      const { data: picks, error } = await supabase
         .from('picks')
-        .select('*', { count: 'exact', head: true })
+        .select('status, odds, stake')
         .eq('user_id', user.id);
       
-      setTotalBets(count || 0);
+      if (error) throw error;
+      
+      if (picks) {
+        setTotalBets(picks.length);
+        
+        let wins = 0;
+        let settled = 0;
+        let totalPoints = 0;
+
+        picks.forEach(pick => {
+          const status = pick.status?.toLowerCase();
+          const stake = pick.stake || 1; // Default to 1 unit if not specified
+
+          if (status === 'won') {
+            wins++;
+            settled++;
+            totalPoints += stake * (pick.odds - 1);
+          } else if (status === 'lost') {
+            settled++;
+            totalPoints -= stake;
+          }
+        });
+
+        const rate = settled > 0 ? (wins / settled) * 100 : 0;
+        setWinRate(rate);
+        setPoints(totalPoints);
+      }
     } catch (error) {
       console.error("Error fetching stats:", error);
     }
@@ -50,31 +83,50 @@ export function ProfileScreen() {
       icon: User,
       label: "Personal Information",
       description: "Update your profile details",
+      path: null,
+    },
+    {
+      icon: CreditCard,
+      label: profile?.is_premium ? "Manage Subscription" : "Upgrade to Premium",
+      description: profile?.is_premium ? "Manage your plan and billing" : "Unlock exclusive features",
+      path: null,
+      action: () => {
+         if (profile?.is_premium) {
+             setIsSubscriptionDetailsOpen(true);
+         } else {
+             setIsPremiumModalOpen(true);
+         }
+      }
     },
     {
       icon: Wallet,
       label: "Bankroll Management",
       description: "Track your betting bankroll",
+      path: "/bankroll",
     },
     {
       icon: Bell,
       label: "Notifications",
       description: "Manage your alerts and updates",
+      path: null,
     },
     {
       icon: Shield,
       label: "Privacy & Security",
       description: "Control your data and security",
+      path: null,
     },
     {
       icon: Settings,
       label: "App Settings",
       description: "Customize your experience",
+      path: null,
     },
     {
       icon: HelpCircle,
       label: "Help & Support",
       description: "Get assistance when you need it",
+      path: null,
     },
   ];
 
@@ -118,16 +170,16 @@ export function ProfileScreen() {
               </p>
             </div>
             <div className="text-center border-x border-[#f0f2f5]">
-              <p className="text-[20px] font-semibold text-[#10b981] tracking-[-0.6px]">
-                0%
+              <p className={`text-[20px] font-semibold tracking-[-0.6px] ${winRate >= 50 ? 'text-[#10b981]' : 'text-[#3e4855]'}`}>
+                {Math.round(winRate)}%
               </p>
               <p className="text-[11px] text-[#8b99ac] tracking-[-0.22px] mt-1">
                 Win Rate
               </p>
             </div>
             <div className="text-center">
-              <p className="text-[20px] font-semibold text-[#3e4855] tracking-[-0.6px]">
-                0
+              <p className={`text-[20px] font-semibold tracking-[-0.6px] ${points >= 0 ? 'text-[#10b981]' : 'text-red-500'}`}>
+                {points > 0 ? '+' : ''}{points.toFixed(1)}
               </p>
               <p className="text-[11px] text-[#8b99ac] tracking-[-0.22px] mt-1">
                 Points
@@ -143,6 +195,10 @@ export function ProfileScreen() {
           {menuItems.map((item, index) => (
             <div
               key={index}
+              onClick={() => {
+                if (item.action) item.action();
+                else if (item.path) navigate(item.path);
+              }}
               className={`p-4 flex items-center gap-4 hover:bg-gray-50 transition-colors cursor-pointer ${
                 index !== menuItems.length - 1 ? "border-b border-[#f0f2f5]" : ""
               }`}
@@ -182,10 +238,13 @@ export function ProfileScreen() {
           </div>
         </div>
       </div>
-
+  <SubscriptionDetailsModal isOpen={isSubscriptionDetailsOpen} onClose={() => setIsSubscriptionDetailsOpen(false)} />
+    
       <div className="fixed bottom-0 left-0 right-0 w-full max-w-7xl mx-auto z-50">
         <BottomNav />
       </div>
+
+      <PremiumModal isOpen={isPremiumModalOpen} onClose={() => setIsPremiumModalOpen(false)} />
     </div>
   );
 }

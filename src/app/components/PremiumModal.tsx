@@ -1,13 +1,58 @@
-import { X, Check, Trophy } from "lucide-react";
+import { X, Check, Trophy, Loader2 } from "lucide-react";
 import { useState } from "react";
+import { useAuth } from "@/app/context/AuthContext";
 
 interface PremiumModalProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
+// TODO: Replace with actual Stripe Price IDs
+const PRICES = {
+    monthly: "price_1StXZVPlsSmDwanRKFc3JICh", // 10 EUR/Month
+    annual: "price_1StXZVPlsSmDwanRKFc3JICh"  // Fallback / Placeholder
+};
+
 export function PremiumModal({ isOpen, onClose }: PremiumModalProps) {
+  const { user } = useAuth();
   const [selectedPlan, setSelectedPlan] = useState<"monthly" | "annual">("annual");
+  const [loading, setLoading] = useState(false);
+
+  const handleSubscribe = async () => {
+    if (!user) {
+        // Handle unauthenticated case (maybe redirect to login?)
+        alert("Please log in first");
+        return;
+    }
+    
+    setLoading(true);
+    try {
+        const response = await fetch("http://localhost:5050/api/checkout", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                userId: user.id,
+                priceId: PRICES[selectedPlan], 
+                successUrl: window.location.origin + "/profile?success=true",
+                cancelUrl: window.location.origin + "/profile?canceled=true",
+            }),
+        });
+
+        if (!response.ok) {
+            throw new Error("Failed to create checkout session");
+        }
+
+        const { url } = await response.json();
+        if (url) {
+            window.location.href = url;
+        }
+    } catch (error) {
+        console.error("Subscription error:", error);
+        alert("Failed to initiate checkout. Please try again.");
+    } finally {
+        setLoading(false);
+    }
+  };
 
   if (!isOpen) return null;
 
@@ -83,7 +128,7 @@ export function PremiumModal({ isOpen, onClose }: PremiumModalProps) {
               Monthly
             </p>
             <p className="font-bold text-[20px] text-[#3e4855] tracking-[-0.6px]">
-              9.99€
+              10.00€
             </p>
             <p className="text-[10px] text-[#8b99ac] tracking-[-0.2px]">
               / month
@@ -124,8 +169,12 @@ export function PremiumModal({ isOpen, onClose }: PremiumModalProps) {
         </div>
 
         {/* CTA Button */}
-        <button className="w-full bg-[#3e4855] text-white py-4 rounded-[12px] font-semibold text-[14px] tracking-[-0.28px] mb-3 hover:bg-[#2f3840] transition-colors">
-          Try Premium free for 7 days
+        <button 
+           onClick={handleSubscribe}
+           disabled={loading}
+           className="w-full bg-[#3e4855] text-white py-4 rounded-[12px] font-semibold text-[14px] tracking-[-0.28px] mb-3 hover:bg-[#2f3840] transition-colors flex justify-center items-center"
+        >
+          {loading ? <Loader2 className="animate-spin size-5" /> : "Try Premium free for 7 days"}
         </button>
 
         {/* Disclaimer */}

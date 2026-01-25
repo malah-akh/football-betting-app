@@ -14,10 +14,20 @@ import { ProtectedRoute } from "@/app/components/ProtectedRoute";
 import { AdminRoute } from "@/app/components/AdminRoute";
 import { MissionControlScreen } from "@/app/screens/MissionControlScreen";
 
+import { BankrollScreen } from "@/app/screens/BankrollScreen";
+
 export const router = createBrowserRouter([
   {
     path: "/",
     Component: HomeScreen,
+  },
+  {
+    path: "/bankroll",
+    element: (
+      <ProtectedRoute>
+        <BankrollScreen />
+      </ProtectedRoute>
+    ),
   },
   {
     path: "/mission-control",

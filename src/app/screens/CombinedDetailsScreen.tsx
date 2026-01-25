@@ -1,5 +1,6 @@
 import { MatchCard } from "@/app/components/MatchCard";
 import { Header } from "@/app/components/Header";
+import { FilterDrawer, FilterState } from "@/app/components/FilterDrawer";
 import { TabBar } from "@/app/components/TabBar";
 import { DateSelector } from "@/app/components/DateSelector";
 import { BottomNav } from "@/app/components/BottomNav";
@@ -7,7 +8,7 @@ import { PremiumCard } from "@/app/components/PremiumCard";
 import { UnlockPremiumCard } from "@/app/components/UnlockPremiumCard";
 import { Circle, TrendingUp } from "lucide-react";
 import { PremiumModal } from "@/app/components/PremiumModal";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 
 export function CombinedDetailsScreen() {
   const matches = [
@@ -47,11 +48,29 @@ export function CombinedDetailsScreen() {
   ];
 
   const [isPremiumModalOpen, setIsPremiumModalOpen] = useState(false);
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [filters, setFilters] = useState<FilterState>({
+    status: "ALL",
+    country: [],
+    league: null,
+    hasTip: false,
+    premiumOnly: false,
+  });
+
+  const availableCountries = useMemo(() => {
+     return ["Europe"]; // Mock data
+  }, []);
+
+  const availableLeagues = useMemo(() => {
+    return Array.from(new Set(matches.map(m => m.league)))
+      .sort()
+      .map(name => ({ name, country: "Europe" })); // Mock mapping
+  }, []);
 
   return (
     <div className="bg-[#dae1e9] min-h-screen flex flex-col w-full max-w-7xl mx-auto relative pb-24">
       {/* Header */}
-      <Header />
+      <Header onFilterClick={() => setIsFilterOpen(true)} />
 
       {/* Title Section */}
       <div className="px-4 mt-4">
@@ -67,7 +86,7 @@ export function CombinedDetailsScreen() {
       <TabBar />
 
       {/* Date Selector */}
-      <DateSelector />
+      <DateSelector onFilterClick={() => setIsFilterOpen(true)} />
 
       {/* Matches List */}
       <div className="flex-1 px-4 mt-6 space-y-4 w-full max-w-3xl mx-auto">
@@ -178,6 +197,23 @@ export function CombinedDetailsScreen() {
 
       {/* Premium Modal */}
       <PremiumModal isOpen={isPremiumModalOpen} onClose={() => setIsPremiumModalOpen(false)} />
+
+      <FilterDrawer
+        open={isFilterOpen}
+        onOpenChange={setIsFilterOpen}
+        currentFilters={filters}
+        onApply={setFilters}
+        onReset={() => setFilters({
+            status: "ALL",
+            country: [],
+            league: null,
+            hasTip: false,
+            premiumOnly: false,
+        })}
+        // Pass empty arrays or mocks since this screen has static data
+        availableCountries={availableCountries} 
+        availableLeagues={availableLeagues}
+      />
     </div>
   );
 }

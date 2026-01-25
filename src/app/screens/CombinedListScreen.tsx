@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Header } from "@/app/components/Header";
+import { FilterDrawer, FilterState } from "@/app/components/FilterDrawer";
 import { TabBar } from "@/app/components/TabBar";
 import { DateSelector } from "@/app/components/DateSelector";
 import { BottomNav } from "@/app/components/BottomNav";
@@ -12,6 +13,14 @@ import { Circle, MapPin, Clock } from "lucide-react";
 export function CombinedListScreen() {
   const navigate = useNavigate();
   const [isPremiumModalOpen, setIsPremiumModalOpen] = useState(false);
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [filters, setFilters] = useState<FilterState>({
+    status: "ALL",
+    country: [],
+    league: null,
+    hasTip: false,
+    premiumOnly: false,
+  });
 
   const combinedMatches = [
     {
@@ -40,10 +49,20 @@ export function CombinedListScreen() {
     },
   ];
 
+  const availableCountries = useMemo(() => {
+     return ["Europe"]; // Mock data has no country, so default to Europe
+  }, []);
+
+  const availableLeagues = useMemo(() => {
+    return Array.from(new Set(combinedMatches.map(m => m.league)))
+      .sort()
+      .map(name => ({ name, country: "Europe" })); // Mock data
+  }, []);
+
   return (
     <div className="bg-[#dae1e9] min-h-screen flex flex-col w-full max-w-7xl mx-auto relative pb-24">
       {/* Header */}
-      <Header />
+      <Header onFilterClick={() => setIsFilterOpen(true)} />
 
       {/* Title Section */}
       <div className="px-4 mt-4">
@@ -59,7 +78,7 @@ export function CombinedListScreen() {
       <TabBar />
 
       {/* Date Selector */}
-      <DateSelector />
+      <DateSelector onFilterClick={() => setIsFilterOpen(true)} />
 
       {/* Combined Matches Card */}
       <div className="flex-1 px-4 mt-6 space-y-4 w-full max-w-3xl mx-auto">
@@ -151,6 +170,21 @@ export function CombinedListScreen() {
         isOpen={isPremiumModalOpen}
         onClose={() => setIsPremiumModalOpen(false)}
       />
-    </div>
+      <FilterDrawer
+        open={isFilterOpen}
+        onOpenChange={setIsFilterOpen}
+        currentFilters={filters}
+        onApply={setFilters}
+        onReset={() => setFilters({
+            status: "ALL",
+            country: [],
+            league: null,
+            hasTip: false,
+            premiumOnly: false,
+        })}
+        // Pass empty arrays or mocks since this screen has static data for now
+        availableCountries={availableCountries} 
+        availableLeagues={availableLeagues}
+      />    </div>
   );
 }

@@ -5,8 +5,19 @@ import { BottomNav } from "@/app/components/BottomNav";
 import { PremiumCard } from "@/app/components/PremiumCard";
 import { UnlockPremiumCard } from "@/app/components/UnlockPremiumCard";
 import { MapPin, Clock, Circle } from "lucide-react";
+import { useState, useMemo } from "react";
+import { FilterDrawer, FilterState } from "@/app/components/FilterDrawer";
 
 export function MultipleDetailsScreen() {
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [filters, setFilters] = useState<FilterState>({
+    status: "ALL",
+    country: [],
+    league: null,
+    hasTip: false,
+    premiumOnly: false,
+  });
+
   const matches = [
     {
       id: 1,
@@ -40,10 +51,20 @@ export function MultipleDetailsScreen() {
     },
   ];
 
+  const availableCountries = useMemo(() => {
+     return ["Europe"]; // Mock data
+  }, []);
+
+  const availableLeagues = useMemo(() => {
+    return Array.from(new Set(matches.map(m => m.league)))
+      .sort()
+      .map(name => ({ name, country: "Europe" })); // Mock mapping
+  }, []);
+
   return (
     <div className="bg-[#dae1e9] min-h-screen flex flex-col w-full max-w-7xl mx-auto relative pb-24">
       {/* Header */}
-      <Header />
+      <Header onFilterClick={() => setIsFilterOpen(true)} />
 
       {/* Title Section */}
       <div className="px-4 mt-4">
@@ -59,7 +80,7 @@ export function MultipleDetailsScreen() {
       <TabBar />
 
       {/* Date Selector */}
-      <DateSelector />
+      <DateSelector onFilterClick={() => setIsFilterOpen(true)} />
 
       {/* Matches List */}
       <div className="flex-1 px-4 mt-6 space-y-4 w-full max-w-3xl mx-auto">
@@ -250,6 +271,23 @@ export function MultipleDetailsScreen() {
       <div className="fixed bottom-0 left-0 right-0 w-full max-w-7xl mx-auto z-50">
         <BottomNav />
       </div>
+
+      <FilterDrawer
+        open={isFilterOpen}
+        onOpenChange={setIsFilterOpen}
+        currentFilters={filters}
+        onApply={setFilters}
+        onReset={() => setFilters({
+            status: "ALL",
+            country: [],
+            league: null,
+            hasTip: false,
+            premiumOnly: false,
+        })}
+        // Pass empty arrays or mocks since this screen has static data for now
+        availableCountries={availableCountries} 
+        availableLeagues={availableLeagues}
+      />
     </div>
   );
 }

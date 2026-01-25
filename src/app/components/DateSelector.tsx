@@ -36,6 +36,7 @@ export function DateSelector({ onDateChange, onFilterClick }: DateSelectorProps)
             const isActive = index === selectedIndex;
             return (
               <button
+                type="button"
                 key={index}
                 onClick={() => handleDateClick(index, item.value)}
                 className={
@@ -54,6 +55,7 @@ export function DateSelector({ onDateChange, onFilterClick }: DateSelectorProps)
       </div>
 
       <button 
+        type="button"
         onClick={onFilterClick}
         className="flex items-center gap-2 text-[#3e4855] hover:opacity-70 transition-opacity"
       >

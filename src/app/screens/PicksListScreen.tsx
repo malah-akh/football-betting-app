@@ -1,6 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router";
 import { Header } from "@/app/components/Header";
+import { FilterDrawer, FilterState } from "@/app/components/FilterDrawer";
 import { TabBar } from "@/app/components/TabBar";
 import { DateSelector } from "@/app/components/DateSelector";
 import { MatchCard } from "@/app/components/MatchCard";
@@ -18,8 +19,31 @@ export function PicksListScreen() {
   const [matches, setMatches] = useState<any[]>([]);
   const [favoriteIds, setFavoriteIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [filters, setFilters] = useState<FilterState>({
+    status: "ALL",
+    country: [],
+    league: null,
+    hasTip: false,
+    premiumOnly: false,
+  });
   const navigate = useNavigate();
   const { user } = useAuth();
+
+  const availableCountries = useMemo(() => {
+     return Array.from(new Set(matches.map(m => m.country || "International"))).sort();
+  }, [matches]);
+
+  const availableLeagues = useMemo(() => {
+    const leaguesMap = new Map<string, string>(); // league -> country
+    matches.forEach(m => {
+        leaguesMap.set(m.league, m.country || "International");
+    });
+    
+    return Array.from(leaguesMap.entries())
+      .map(([name, country]) => ({ name, country }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }, [matches]);
 
   useEffect(() => {
     fetchMatches();
@@ -103,6 +127,9 @@ export function PicksListScreen() {
 
       if (data) {
         const mappedMatches = data.map((m: any) => {
+          // Robustly handle leagues relation (object or array)
+          const leagueData = Array.isArray(m.leagues) ? m.leagues[0] : m.leagues;
+
           const matchOdds = m.odds && m.odds.length > 0 
             ? {
                 home: m.odds[0].home_odd,
@@ -113,9 +140,10 @@ export function PicksListScreen() {
 
           return {
              id: m.id,
-             league: m.leagues?.name || 'Unknown League',
-             leagueLogo: m.leagues?.logo_url,
-             location: m.venue?.city ? `${m.venue.city}, ${m.venue.name || ''}` : (m.leagues?.country || 'Unknown Location'),
+             league: leagueData?.name || 'Unknown League',
+             country: leagueData?.country || 'International',
+             leagueLogo: leagueData?.logo_url,
+             location: m.venue?.city ? `${m.venue.city}, ${m.venue.name || ''}` : (leagueData?.country || 'Unknown Location'),
              time: formatMatchTime(m.start_time),
              homeTeam: m.home_team?.name || 'Home Team',
              homeTeamLogo: m.home_team?.logo,
@@ -148,6 +176,14 @@ export function PicksListScreen() {
     setSelectedMatch(null);
   };
 
+  const filteredMatches = useMemo(() => {
+    return matches.filter(match => {
+      if (filters.country.length > 0 && !filters.country.includes(match.country)) return false;
+      if (filters.league && match.league !== filters.league) return false;
+      return true;
+    });
+  }, [matches, filters]);
+
   return (
     <div className="bg-[#dae1e9] min-h-screen flex flex-col w-full max-w-7xl mx-auto relative">
       {/* Background Wave */}
@@ -166,7 +202,7 @@ export function PicksListScreen() {
       </div>
 
       {/* Header */}
-      <Header />
+      <Header onFilterClick={() => setIsFilterOpen(true)} />
 
       {/* Title Section */}
       <div className="px-4 mt-4">
@@ -182,14 +218,14 @@ export function PicksListScreen() {
       <TabBar />
 
       {/* Date Selector and Filter */}
-      <DateSelector />
+      <DateSelector onFilterClick={() => setIsFilterOpen(true)} />
 
       {/* Matches List */}
       <div className="flex-1 px-4 mt-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pb-24">
         {loading ? (
           <div className="text-center py-8 text-gray-500">Loading matches...</div>
-        ) : matches.length > 0 ? (
-          matches.map((match) => (
+        ) : filteredMatches.length > 0 ? (
+          filteredMatches.map((match) => (
             <div
               key={match.id}
               onClick={() => handleMatchClick(match.id)}
@@ -227,6 +263,22 @@ export function PicksListScreen() {
         onClose={handleCloseMod}
         onConfirm={handleConfirmPick}
         suggestedAmount="€16.75"
+      />
+
+      <FilterDrawer
+        open={isFilterOpen}
+        onOpenChange={setIsFilterOpen}
+        currentFilters={filters}
+        onApply={setFilters}
+        onReset={() => setFilters({
+            status: "ALL",
+            country: [],
+            league: null,
+            hasTip: false,
+            premiumOnly: false,
+        })}
+        availableCountries={availableCountries} 
+        availableLeagues={availableLeagues}
       />
     </div>
   );

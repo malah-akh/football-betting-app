@@ -19,10 +19,7 @@ export function Header({ onFilterClick }: HeaderProps) {
         {onFilterClick && (
           <button 
             type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              onFilterClick();
-            }}
+            onClick={onFilterClick}
             className="flex items-center justify-center w-10 h-10 rounded-lg bg-white border border-gray-200 shadow-sm hover:bg-gray-50 active:scale-95 transition-all cursor-pointer"
             aria-label="Filter"
           >
