@@ -42,7 +42,9 @@ const InfoTooltip = ({ content }: { content: string }) => (
   <TooltipProvider>
     <Tooltip>
       <TooltipTrigger asChild>
-        <Info className="h-3 w-3 text-muted-foreground/70 hover:text-primary cursor-help" />
+        <span className="inline-flex cursor-help">
+          <Info className="h-3 w-3 text-muted-foreground/70 hover:text-primary" />
+        </span>
       </TooltipTrigger>
       <TooltipContent>
         <p className="max-w-[200px] text-xs font-normal">{content}</p>
