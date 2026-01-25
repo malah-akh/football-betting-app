@@ -97,7 +97,7 @@ export function FavoritesScreen() {
   };
 
   return (
-    <div className="bg-[#dae1e9] min-h-screen flex flex-col max-w-[440px] mx-auto relative">
+    <div className="bg-[#dae1e9] min-h-screen flex flex-col w-full max-w-7xl mx-auto relative">
       <Header />
 
       <div className="px-4 mt-4 mb-4">
@@ -125,7 +125,7 @@ export function FavoritesScreen() {
               <h2 className="text-[#3e4855] text-sm font-bold uppercase tracking-wider pl-1 sticky top-0 bg-[#dae1e9]/95 backdrop-blur-sm z-10 py-2">
                 {country}
               </h2>
-              <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {countryMatches.map((match: any) => (
                   <div key={match.id} onClick={() => handleMatchClick(match.id)} className="cursor-pointer">
                     <MatchCard 
@@ -153,7 +153,7 @@ export function FavoritesScreen() {
         </div>
       )}
 
-      <div className="fixed bottom-0 left-0 right-0 max-w-[440px] mx-auto">
+      <div className="fixed bottom-0 left-0 right-0 w-full max-w-7xl mx-auto z-50">
         <BottomNav />
       </div>
     </div>

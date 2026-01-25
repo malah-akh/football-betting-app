@@ -81,9 +81,9 @@ export function RegisterScreen() {
 
   if (success) {
     return (
-      <div className="bg-[#dae1e9] min-h-screen flex flex-col max-w-[440px] mx-auto relative">
+      <div className="bg-[#dae1e9] min-h-screen flex flex-col w-full max-w-7xl mx-auto relative">
         <Header />
-        <div className="flex-1 flex flex-col justify-center px-4">
+        <div className="flex-1 flex flex-col justify-center px-4 w-full max-w-md mx-auto">
           <Card className="w-full">
             <CardHeader>
               <CardTitle>Check your email</CardTitle>
@@ -108,16 +108,18 @@ export function RegisterScreen() {
             </CardFooter>
           </Card>
         </div>
-        <BottomNav />
+        <div className="fixed bottom-0 left-0 right-0 w-full max-w-7xl mx-auto z-50">
+          <BottomNav />
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="bg-[#dae1e9] min-h-screen flex flex-col max-w-[440px] mx-auto relative">
+    <div className="bg-[#dae1e9] min-h-screen flex flex-col w-full max-w-7xl mx-auto relative">
       <Header />
       
-      <div className="flex-1 flex flex-col justify-center px-4">
+      <div className="flex-1 flex flex-col justify-center px-4 w-full max-w-md mx-auto">
         <Card className="w-full">
           <CardHeader>
             <CardTitle>Create an Account</CardTitle>
@@ -179,7 +181,9 @@ export function RegisterScreen() {
         </Card>
       </div>
 
-      <BottomNav />
+      <div className="fixed bottom-0 left-0 right-0 w-full max-w-7xl mx-auto z-50">
+        <BottomNav />
+      </div>
     </div>
   );
 }

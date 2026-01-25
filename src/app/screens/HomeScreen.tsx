@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Header } from "@/app/components/Header";
+import { FilterDrawer, FilterState } from "@/app/components/FilterDrawer";
 import { TabBar } from "@/app/components/TabBar";
 import { DateSelector } from "@/app/components/DateSelector";
 import { MatchCard } from "@/app/components/MatchCard";
@@ -12,12 +13,22 @@ import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/app/context/AuthContext";
 import { ingestMatches } from "@/lib/backend";
 import { formatMatchTime } from "@/app/components/ui/utils";
+import { Button } from "@/app/components/ui/button";
 
 export function HomeScreen() {
   const navigate = useNavigate();
   const { user, profile } = useAuth();
   const [isPremiumModalOpen, setIsPremiumModalOpen] = useState(false);
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [filters, setFilters] = useState<FilterState>({
+    status: "ALL",
+    country: null,
+    league: null,
+    hasTip: false,
+    premiumOnly: false,
+  });
   const [matches, setMatches] = useState<any[]>([]);
+  const [page, setPage] = useState(1);
   const [favoriteIds, setFavoriteIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -25,7 +36,12 @@ export function HomeScreen() {
 
   useEffect(() => {
     fetchMatches(selectedDate);
+    setPage(1);
   }, [selectedDate]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [filters]);
 
   useEffect(() => {
     if (user) {
@@ -164,6 +180,7 @@ export function HomeScreen() {
             leagueLogo: m.leagues?.logo_url,
             location: m.venue?.city ? `${m.venue.city}, ${m.venue.name || ''}` : (m.leagues?.country || 'Unknown Location'),
             time: formatMatchTime(m.start_time),
+            status: m.status,
             homeTeam: m.home_team?.name || 'Home Team',
             homeTeamLogo: m.home_team?.logo,
             awayTeam: m.away_team?.name || 'Away Team',
@@ -182,14 +199,56 @@ export function HomeScreen() {
     }
   }
 
+  const filteredMatches = useMemo(() => {
+    return matches.filter(match => {
+      // Status filter
+      if (filters.status !== 'ALL') {
+        const s = match.status; 
+        const statusMap: Record<string, string[]> = {
+          'UPCOMING': ['NS', 'TBD'],
+          'LIVE': ['1H', '2H', 'HT', 'ET', 'P', 'LIVE'],
+          'FINISHED': ['FT', 'AET', 'PEN']
+        };
+        const allowed = statusMap[filters.status];
+        // If status is not in the allowed list, filter it out.
+        // Note: If s is undefined/null, it won't match.
+        if (allowed && !allowed.includes(s)) return false;
+      }
+      
+      if (filters.country && match.country !== filters.country) return false;
+      if (filters.league && match.league !== filters.league) return false;
+      if (filters.hasTip && !match.tip) return false;
+      if (filters.premiumOnly) {
+         if (!match.tip || !match.tip.is_premium) return false;
+      }
+      return true;
+    });
+  }, [matches, filters]);
+
+  const availableCountries = useMemo(() => {
+     return Array.from(new Set(matches.map(m => m.country))).sort();
+  }, [matches]);
+
+  const availableLeagues = useMemo(() => {
+    return Array.from(new Set(
+      matches
+        .filter(m => !filters.country || m.country === filters.country)
+        .map(m => m.league)
+    )).sort();
+  }, [matches, filters.country]);
+
+  const displayedMatches = useMemo(() => {
+    return filteredMatches.slice(0, page * 10);
+  }, [filteredMatches, page]);
+
   const handleMatchClick = (matchId: string) => {
     navigate(`/match/${matchId}`);
   };
 
   return (
-    <div className="bg-[#dae1e9] min-h-screen flex flex-col max-w-[440px] mx-auto relative">
+    <div className="bg-[#dae1e9] min-h-screen flex flex-col w-full max-w-7xl mx-auto relative">
       {/* Background Wave */}
-      <div className="absolute top-0 left-0 w-full h-[350px] -z-10">
+      <div className="absolute top-0 left-0 w-full h-[350px] -z-10 pointer-events-none">
         <svg
           className="w-full h-full"
           fill="none"
@@ -204,7 +263,7 @@ export function HomeScreen() {
       </div>
 
       {/* Header */}
-      <Header />
+      <Header onFilterClick={() => setIsFilterOpen(true)} />
 
       {/* Title Section */}
       <div className="px-4 mt-4">
@@ -220,7 +279,10 @@ export function HomeScreen() {
       <TabBar />
 
       {/* Date Selector */}
-      <DateSelector onDateChange={setSelectedDate} />
+      <DateSelector 
+        onDateChange={setSelectedDate} 
+        onFilterClick={() => setIsFilterOpen(true)}
+      />
 
       {/* Matches List */}
       <div className="flex-1 px-4 mt-6 space-y-4 pb-24">
@@ -228,32 +290,45 @@ export function HomeScreen() {
           <div className="text-center py-8 text-gray-500">Loading matches...</div>
         ) : errorMsg ? (
           <div className="text-center py-8 text-red-500">Error: {errorMsg}</div>
-        ) : matches.length > 0 ? (
-          Object.entries(matches.reduce((acc: Record<string, any[]>, match) => {
-            const country = match.country || 'International';
-            if (!acc[country]) acc[country] = [];
-            acc[country].push(match);
-            return acc;
-          }, {})).map(([country, countryMatches]) => (
-            <div key={country} className="space-y-3">
-              <h2 className="text-[#3e4855] text-sm font-bold uppercase tracking-wider pl-1 sticky top-0 bg-[#dae1e9]/95 backdrop-blur-sm z-10 py-2">
-                {country}
-              </h2>
-              <div className="space-y-4">
-                {countryMatches.map((match: any) => (
-                  <div key={match.id} onClick={() => handleMatchClick(match.id)} className="cursor-pointer">
-                    <MatchCard 
-                      {...match} 
-                      isFavorite={favoriteIds.has(match.id)}
-                      onToggleFavorite={(e) => toggleFavorite(match.id, e)}
-                      isUserPremium={profile?.is_premium}
-                      potentialReturn="€33.75"
-                    />
-                  </div>
-                ))}
+        ) : filteredMatches.length > 0 ? (
+          <>
+            {Object.entries(displayedMatches.reduce((acc: Record<string, any[]>, match) => {
+              const country = match.country || 'International';
+              if (!acc[country]) acc[country] = [];
+              acc[country].push(match);
+              return acc;
+            }, {})).map(([country, countryMatches]) => (
+              <div key={country} className="space-y-3">
+                <h2 className="text-[#3e4855] text-sm font-bold uppercase tracking-wider pl-1 sticky top-0 bg-[#dae1e9]/95 backdrop-blur-sm z-10 py-2">
+                  {country}
+                </h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {countryMatches.map((match: any) => (
+                    <div key={match.id} onClick={() => handleMatchClick(match.id)} className="cursor-pointer">
+                      <MatchCard 
+                        {...match} 
+                        isFavorite={favoriteIds.has(match.id)}
+                        onToggleFavorite={(e) => toggleFavorite(match.id, e)}
+                        isUserPremium={profile?.is_premium}
+                        potentialReturn="€33.75"
+                      />
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
-          ))
+            ))}
+            {filteredMatches.length > displayedMatches.length && (
+              <div className="pt-4 pb-2">
+                <Button 
+                    onClick={() => setPage(p => p + 1)} 
+                    variant="outline" 
+                    className="w-full bg-white border-none shadow-sm hover:bg-gray-50 text-[#3e4855]"
+                >
+                  Load More Matches
+                </Button>
+              </div>
+            )}
+          </>
         ) : (
           <div className="text-center py-8 text-gray-500">No matches found</div>
         )}
@@ -272,12 +347,28 @@ export function HomeScreen() {
       </div>
 
       {/* Bottom Navigation */}
-      <div className="fixed bottom-0 left-0 right-0 max-w-[440px] mx-auto">
+      <div className="fixed bottom-0 left-0 right-0 w-full max-w-7xl mx-auto z-50">
         <BottomNav />
       </div>
 
       {/* Premium Modal */}
       <PremiumModal isOpen={isPremiumModalOpen} onClose={() => setIsPremiumModalOpen(false)} />
+
+      <FilterDrawer
+        open={isFilterOpen}
+        onOpenChange={setIsFilterOpen}
+        currentFilters={filters}
+        onApply={setFilters}
+        onReset={() => setFilters({
+            status: "ALL",
+            country: null,
+            league: null,
+            hasTip: false,
+            premiumOnly: false,
+        })}
+        availableCountries={availableCountries}
+        availableLeagues={availableLeagues}
+      />
     </div>
   );
 }

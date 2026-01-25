@@ -45,12 +45,17 @@ export function MissionControlScreen() {
   const [leagues, setLeagues] = useState<any[]>([]);
   const [selectedLeagueId, setSelectedLeagueId] = useState<string>("all");
   const [matches, setMatches] = useState<any[]>([]);
+  const [page, setPage] = useState(1);
   const [tips, setTips] = useState<Record<string, any>>({});
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     fetchLeagues();
   }, []);
+
+  useEffect(() => {
+    setPage(1);
+  }, [selectedDate, selectedLeagueId]);
 
   useEffect(() => {
     fetchMatchesAndTips(selectedDate);
@@ -201,8 +206,10 @@ export function MissionControlScreen() {
     fetchMatchesAndTips(selectedDate);
   };
 
+  const displayedMatches = matches.slice(0, page * 10);
+
   return (
-    <div className="flex flex-col min-h-screen bg-background pb-20">
+    <div className="flex flex-col min-h-screen bg-background pb-24 w-full max-w-7xl mx-auto relative">
       <Header />
       
       <div className="p-4 bg-white border-b sticky top-[60px] z-10">
@@ -285,7 +292,7 @@ export function MissionControlScreen() {
         </div>
       </div>
 
-      <div className="flex-1 p-4 space-y-4">
+      <div className="flex-1 p-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {loading ? (
           <div className="text-center py-10">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-slate-800 mx-auto mb-2"></div>
@@ -298,7 +305,8 @@ export function MissionControlScreen() {
               <Button variant="link" onClick={handleSyncMatches}>Sync Matches</Button>
           </div>
         ) : (
-          matches.map((match) => {
+          <>
+            {displayedMatches.map((match) => {
             const hasTip = !!tips[match.id];
             const tip = tips[match.id];
             const homeName = match.home_team?.name || 'Unknown Home';
@@ -442,11 +450,21 @@ export function MissionControlScreen() {
                 </CardContent>
               </Card>
             );
-          })
+          })}
+          {matches.length > displayedMatches.length && (
+            <div className="col-span-1 md:col-span-2 lg:col-span-3 flex justify-center py-4">
+               <Button onClick={() => setPage(p => p + 1)} variant="outline">
+                   Load More Matches
+               </Button>
+            </div>
+          )}
+          </>
         )}
       </div>
 
-      <BottomNav />
+      <div className="fixed bottom-0 left-0 right-0 w-full max-w-7xl mx-auto z-50">
+        <BottomNav />
+      </div>
     </div>
   );
 }

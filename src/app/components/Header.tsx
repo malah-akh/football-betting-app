@@ -7,7 +7,7 @@ interface HeaderProps {
 
 export function Header({ onFilterClick }: HeaderProps) {
   return (
-    <div className="flex items-center justify-between px-4 pt-6 pb-4">
+    <div className="flex items-center justify-between px-4 pt-6 pb-4 relative z-40">
       {/* Menu Icon */}
       <div className="flex flex-col gap-2">
         <div className="bg-[#3e4855] h-[3px] w-[30px]" />
@@ -15,13 +15,18 @@ export function Header({ onFilterClick }: HeaderProps) {
         <div className="bg-[#3e4855] h-[3px] w-[18px]" />
       </div>
 
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-3 relative z-50">
         {onFilterClick && (
           <button 
-            onClick={onFilterClick}
-            className="flex items-center justify-center size-[36px] rounded-lg bg-white border border-gray-200 shadow-sm active:scale-95 transition-transform"
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onFilterClick();
+            }}
+            className="flex items-center justify-center w-10 h-10 rounded-lg bg-white border border-gray-200 shadow-sm hover:bg-gray-50 active:scale-95 transition-all cursor-pointer"
+            aria-label="Filter"
           >
-            <ListFilter className="size-5 text-[#3e4855]" />
+            <ListFilter className="w-5 h-5 text-[#3e4855] pointer-events-none" />
           </button>
         )}
 

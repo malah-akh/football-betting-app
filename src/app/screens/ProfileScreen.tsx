@@ -79,12 +79,12 @@ export function ProfileScreen() {
   ];
 
   return (
-    <div className="bg-[#dae1e9] min-h-screen flex flex-col max-w-[440px] mx-auto relative pb-24">
+    <div className="bg-[#dae1e9] min-h-screen flex flex-col w-full max-w-7xl mx-auto relative pb-24">
       {/* Header */}
       <Header />
 
       {/* Profile Header */}
-      <div className="px-4 mt-4">
+      <div className="px-4 mt-4 w-full max-w-3xl mx-auto">
         <div className="bg-white rounded-[20px] shadow-[0px_13px_36px_0px_rgba(80,82,113,0.2)] p-6">
           <div className="flex items-center gap-4">
             <div className="size-16 bg-[#3e4855] rounded-full flex items-center justify-center">
@@ -103,7 +103,7 @@ export function ProfileScreen() {
       </div>
 
       {/* Stats Overview */}
-      <div className="px-4 mt-4">
+      <div className="px-4 mt-4 w-full max-w-3xl mx-auto">
         <div className="bg-white rounded-[20px] shadow-[0px_13px_36px_0px_rgba(80,82,113,0.2)] p-6">
           <h3 className="font-semibold text-[14px] text-[#3e4855] tracking-[-0.28px] mb-4">
             Your Performance
@@ -138,7 +138,7 @@ export function ProfileScreen() {
       </div>
 
       {/* Menu Items */}
-      <div className="px-4 mt-4">
+      <div className="px-4 mt-4 w-full max-w-3xl mx-auto">
         <div className="bg-white rounded-[20px] shadow-[0px_13px_36px_0px_rgba(80,82,113,0.2)] overflow-hidden">
           {menuItems.map((item, index) => (
             <div
@@ -183,7 +183,7 @@ export function ProfileScreen() {
         </div>
       </div>
 
-      <div className="fixed bottom-0 left-0 right-0 max-w-[440px] mx-auto">
+      <div className="fixed bottom-0 left-0 right-0 w-full max-w-7xl mx-auto z-50">
         <BottomNav />
       </div>
     </div>

@@ -150,7 +150,7 @@ export function PicksListScreen() {
   };
 
   return (
-    <div className="bg-[#dae1e9] min-h-screen flex flex-col max-w-[440px] mx-auto relative">
+    <div className="bg-[#dae1e9] min-h-screen flex flex-col w-full max-w-7xl mx-auto relative">
       {/* Background Wave */}
       <div className="absolute top-0 left-0 w-full h-[350px] -z-10">
         <svg
@@ -186,7 +186,7 @@ export function PicksListScreen() {
       <DateSelector />
 
       {/* Matches List */}
-      <div className="flex-1 px-4 mt-6 space-y-4 pb-24">
+      <div className="flex-1 px-4 mt-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pb-24">
         {loading ? (
           <div className="text-center py-8 text-gray-500">Loading matches...</div>
         ) : matches.length > 0 ? (
@@ -218,7 +218,7 @@ export function PicksListScreen() {
       </div>
 
       {/* Bottom Navigation */}
-      <div className="fixed bottom-0 left-0 right-0 max-w-[440px] mx-auto">
+      <div className="fixed bottom-0 left-0 right-0 w-full max-w-7xl mx-auto z-50">
         <BottomNav />
       </div>
 

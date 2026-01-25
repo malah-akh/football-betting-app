@@ -41,7 +41,7 @@ export function CombinedListScreen() {
   ];
 
   return (
-    <div className="bg-[#dae1e9] min-h-screen flex flex-col max-w-[440px] mx-auto relative pb-24">
+    <div className="bg-[#dae1e9] min-h-screen flex flex-col w-full max-w-7xl mx-auto relative pb-24">
       {/* Header */}
       <Header />
 
@@ -62,7 +62,7 @@ export function CombinedListScreen() {
       <DateSelector />
 
       {/* Combined Matches Card */}
-      <div className="flex-1 px-4 mt-6 space-y-4">
+      <div className="flex-1 px-4 mt-6 space-y-4 w-full max-w-3xl mx-auto">
         <div
           onClick={() => navigate("/combined-details")}
           className="bg-white rounded-[20px] shadow-[0px_13px_36px_0px_rgba(80,82,113,0.2)] p-6 cursor-pointer hover:shadow-[0px_16px_42px_0px_rgba(80,82,113,0.25)] transition-shadow"
@@ -142,7 +142,7 @@ export function CombinedListScreen() {
       </div>
 
       {/* Bottom Navigation */}
-      <div className="fixed bottom-0 left-0 right-0 max-w-[440px] mx-auto">
+      <div className="fixed bottom-0 left-0 right-0 w-full max-w-7xl mx-auto z-50">
         <BottomNav />
       </div>
 

@@ -174,11 +174,11 @@ export function MatchDetailScreen() {
   const matchOdds = Array.isArray(match.odds) ? match.odds[0] : match.odds;
 
   return (
-    <div className="bg-[#dae1e9] min-h-screen flex flex-col max-w-[440px] mx-auto relative pb-24">
+    <div className="bg-[#dae1e9] min-h-screen flex flex-col w-full max-w-7xl mx-auto relative pb-24">
       <Header />
       
       {/* Back Button & Title */}
-       <div className="px-4 mt-4 flex items-center gap-4">
+       <div className="px-4 mt-4 flex items-center gap-4 w-full max-w-3xl mx-auto">
         <button 
           onClick={() => navigate(-1)}
           className="size-10 bg-white rounded-full flex items-center justify-center shadow-sm hover:bg-gray-50 transition-colors"
@@ -190,7 +190,7 @@ export function MatchDetailScreen() {
         </h1>
       </div>
 
-      <div className="flex-1 px-4 mt-6 space-y-4">
+      <div className="flex-1 px-4 mt-6 space-y-4 w-full max-w-3xl mx-auto">
         
         {/* Main Combined Card */}
         <div className="bg-white rounded-[20px] shadow-[0px_13px_36px_0px_rgba(80,82,113,0.2)] p-6">
@@ -384,7 +384,7 @@ export function MatchDetailScreen() {
         </div>
       </div>
        
-      <div className="fixed bottom-0 left-0 right-0 max-w-[440px] mx-auto z-10">
+      <div className="fixed bottom-0 left-0 right-0 w-full max-w-7xl mx-auto z-50">
         <BottomNav />
       </div>
 

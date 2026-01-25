@@ -40,7 +40,7 @@ export function ResultsScreen() {
   ];
 
   return (
-    <div className="bg-[#dae1e9] min-h-screen flex flex-col max-w-[440px] mx-auto relative">
+    <div className="bg-[#dae1e9] min-h-screen flex flex-col w-full max-w-7xl mx-auto relative">
       {/* Header */}
       <Header />
 
@@ -55,7 +55,7 @@ export function ResultsScreen() {
       </div>
 
       {/* Stats Summary */}
-      <div className="px-4 mt-6">
+      <div className="px-4 mt-6 w-full max-w-3xl mx-auto">
         <div className="bg-white rounded-[20px] shadow-[0px_13px_36px_0px_rgba(80,82,113,0.2)] p-6">
           <h2 className="font-semibold text-[16px] text-[#3e4855] tracking-[-0.48px] mb-4">
             This Month
@@ -90,11 +90,12 @@ export function ResultsScreen() {
       </div>
 
       {/* Results List */}
-      <div className="flex-1 px-4 mt-6 space-y-4 pb-24">
-        <h3 className="font-semibold text-[14px] text-[#3e4855] tracking-[-0.28px]">
+      <div className="flex-1 px-4 mt-6 pb-24 w-full max-w-7xl mx-auto">
+        <h3 className="font-semibold text-[14px] text-[#3e4855] tracking-[-0.28px] mb-4">
           Recent Results
         </h3>
 
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {recentResults.map((result) => (
           <div
             key={result.id}
@@ -168,10 +169,11 @@ export function ResultsScreen() {
             </div>
           </div>
         ))}
+        </div>
       </div>
 
       {/* Bottom Navigation */}
-      <div className="fixed bottom-0 left-0 right-0 max-w-[440px] mx-auto">
+      <div className="fixed bottom-0 left-0 right-0 w-full max-w-7xl mx-auto z-50">
         <BottomNav />
       </div>
     </div>

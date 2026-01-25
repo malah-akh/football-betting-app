@@ -49,7 +49,7 @@ export function CombinedDetailsScreen() {
   const [isPremiumModalOpen, setIsPremiumModalOpen] = useState(false);
 
   return (
-    <div className="bg-[#dae1e9] min-h-screen flex flex-col max-w-[440px] mx-auto relative pb-24">
+    <div className="bg-[#dae1e9] min-h-screen flex flex-col w-full max-w-7xl mx-auto relative pb-24">
       {/* Header */}
       <Header />
 
@@ -70,7 +70,7 @@ export function CombinedDetailsScreen() {
       <DateSelector />
 
       {/* Matches List */}
-      <div className="flex-1 px-4 mt-6 space-y-4">
+      <div className="flex-1 px-4 mt-6 space-y-4 w-full max-w-3xl mx-auto">
         {/* Match Cards */}
         {matches.map((match) => (
           <div key={match.id} className="relative">
@@ -172,7 +172,7 @@ export function CombinedDetailsScreen() {
       </div>
 
       {/* Bottom Navigation */}
-      <div className="fixed bottom-0 left-0 right-0 max-w-[440px] mx-auto">
+      <div className="fixed bottom-0 left-0 right-0 w-full max-w-7xl mx-auto z-50">
         <BottomNav />
       </div>
 

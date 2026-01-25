@@ -1,13 +1,17 @@
 import { Link, useLocation } from "react-router";
+import { Rocket } from "lucide-react";
+import { useAuth } from "@/app/context/AuthContext";
 import svgPaths from "@/imports/svg-hmknk0ergo";
 
 export function BottomNav() {
+  const { profile } = useAuth();
   const location = useLocation();
   const isHome = location.pathname === "/";
   const isPicks = location.pathname === "/picks";
   const isFavorites = location.pathname === "/favorites";
   const isResults = location.pathname === "/results";
   const isProfile = location.pathname === "/profile";
+  const isMissionControl = location.pathname === "/mission-control";
 
   return (
     <div className="relative bg-[#3e4855] h-[64px]">
@@ -69,6 +73,16 @@ export function BottomNav() {
           </div>
           <p className={`font-semibold text-[14px] tracking-[-0.14px] ${isProfile ? "text-white" : "text-[#C7CCD2]"}`}>Profile</p>
         </Link>
+
+        {/* Mission Control - Admin Only */}
+        {profile?.role === "admin" && (
+          <Link to="/mission-control" className="flex flex-col items-center gap-1">
+            <div className="size-[16px] flex items-center justify-center">
+              <Rocket size={16} color={isMissionControl ? "#DAE1E9" : "#C7CCD2"} />
+            </div>
+            <p className={`font-semibold text-[14px] tracking-[-0.14px] ${isMissionControl ? "text-white" : "text-[#C7CCD2]"}`}>Admin</p>
+          </Link>
+        )}
       </div>
     </div>
   );

@@ -50,10 +50,10 @@ export function LoginScreen() {
   };
 
   return (
-    <div className="bg-[#dae1e9] min-h-screen flex flex-col max-w-[440px] mx-auto relative">
+    <div className="bg-[#dae1e9] min-h-screen flex flex-col w-full max-w-7xl mx-auto relative">
       <Header />
       
-      <div className="flex-1 flex flex-col justify-center px-4">
+      <div className="flex-1 flex flex-col justify-center px-4 w-full max-w-md mx-auto">
         <Card className="w-full">
           <CardHeader>
             <CardTitle>Welcome Back</CardTitle>
@@ -103,7 +103,9 @@ export function LoginScreen() {
         </Card>
       </div>
 
-      <BottomNav />
+      <div className="fixed bottom-0 left-0 right-0 w-full max-w-7xl mx-auto z-50">
+        <BottomNav />
+      </div>
     </div>
   );
 }
