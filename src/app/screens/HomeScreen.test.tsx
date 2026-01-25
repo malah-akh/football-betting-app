@@ -63,7 +63,7 @@ describe('HomeScreen', () => {
         });
         
         // Verify select was called with the correct string
-        const selectQuery = selectMock.mock.calls[0][0];
+        const selectQuery = (selectMock.mock.calls[0] as unknown as any[])[0];
         expect(selectQuery).toContain('tips!inner');
     });
 });

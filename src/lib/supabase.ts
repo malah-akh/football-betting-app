@@ -19,7 +19,7 @@ export const supabase = createClient<Database>(
       // Workaround for "AbortError: signal is aborted without reason" in dev/HMR
       // Forces the client to bypass navigator.locks if they are causing issues.
       // We pass a custom lock function that just runs the callback immediately.
-      lock: (name, acquireTimeout, fn) => {
+      lock: (_name, _acquireTimeout, fn) => {
          return fn();
       },
       debug: false

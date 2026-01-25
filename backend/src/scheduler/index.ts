@@ -6,9 +6,13 @@ export function startScheduler() {
 
   // 1. Live Matches: Every 15 seconds (Simulated "Live" polling)
   // In prod, this might be tighter, but for API quota safety we start with 30s or 1m
-  cron.schedule('*/30 * * * * *', async () => {
-      await MatchIngestionProducer.fetchAndPublishLiveMatches();
-  });
+  if (process.env.DISABLE_LIVE_UPDATES === 'true') {
+    console.log('🚫 Live updates disabled by config');
+  } else {
+    cron.schedule('*/30 * * * * *', async () => {
+        await MatchIngestionProducer.fetchAndPublishLiveMatches();
+    });
+  }
 
   // 2. Upcoming Matches for Today: Every 10 minutes
   cron.schedule('*/10 * * * *', async () => {

@@ -39,6 +39,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .select("*") // Fetch all fields to satisfy Profile type
         .eq("id", userId)
         .single()
+        // @ts-ignore - abortSignal exists in v2 but types might be mismatching in some environments
         .abortSignal(controller.signal);
 
       clearTimeout(timeoutId);

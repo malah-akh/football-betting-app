@@ -181,10 +181,6 @@ export function MissionControlScreen() {
     }
   }
 
-  const handleTipSaved = () => {
-    fetchMatchesAndTips(selectedDate);
-  };
-
   const handleSyncMatches = async () => {
     setLoading(true);
     try {
