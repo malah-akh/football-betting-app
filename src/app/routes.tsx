@@ -8,11 +8,24 @@ import { CombinedDetailsScreen } from "@/app/screens/CombinedDetailsScreen";
 import { FavoritesScreen } from "@/app/screens/FavoritesScreen";
 import { ResultsScreen } from "@/app/screens/ResultsScreen";
 import { ProfileScreen } from "@/app/screens/ProfileScreen";
+import { LoginScreen } from "@/app/screens/LoginScreen";
+import { RegisterScreen } from "@/app/screens/RegisterScreen";
+import { ProtectedRoute } from "@/app/components/ProtectedRoute";
+import { AdminRoute } from "@/app/components/AdminRoute";
+import { MissionControlScreen } from "@/app/screens/MissionControlScreen";
 
 export const router = createBrowserRouter([
   {
     path: "/",
     Component: HomeScreen,
+  },
+  {
+    path: "/mission-control",
+    element: (
+      <AdminRoute>
+        <MissionControlScreen />
+      </AdminRoute>
+    ),
   },
   {
     path: "/picks",
@@ -36,7 +49,11 @@ export const router = createBrowserRouter([
   },
   {
     path: "/favorites",
-    Component: FavoritesScreen,
+    element: (
+      <ProtectedRoute>
+        <FavoritesScreen />
+      </ProtectedRoute>
+    ),
   },
   {
     path: "/results",
@@ -44,6 +61,18 @@ export const router = createBrowserRouter([
   },
   {
     path: "/profile",
-    Component: ProfileScreen,
+    element: (
+      <ProtectedRoute>
+        <ProfileScreen />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/login",
+    Component: LoginScreen,
+  },
+  {
+    path: "/register",
+    Component: RegisterScreen,
   },
 ]);

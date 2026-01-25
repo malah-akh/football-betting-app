@@ -1,5 +1,9 @@
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router";
 import { Header } from "@/app/components/Header";
 import { BottomNav } from "@/app/components/BottomNav";
+import { useAuth } from "@/app/context/AuthContext";
+import { supabase } from "@/lib/supabase";
 import {
   User,
   Wallet,
@@ -12,6 +16,35 @@ import {
 } from "lucide-react";
 
 export function ProfileScreen() {
+  const navigate = useNavigate();
+  const { profile, user, signOut } = useAuth();
+  const [totalBets, setTotalBets] = useState(0);
+
+  useEffect(() => {
+    if (user) {
+      fetchStats();
+    }
+  }, [user]);
+
+  async function fetchStats() {
+    if (!user) return;
+    try {
+      const { count } = await supabase
+        .from('picks')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', user.id);
+      
+      setTotalBets(count || 0);
+    } catch (error) {
+      console.error("Error fetching stats:", error);
+    }
+  }
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate("/login");
+  };
+
   const menuItems = [
     {
       icon: User,
@@ -46,7 +79,7 @@ export function ProfileScreen() {
   ];
 
   return (
-    <div className="bg-[#dae1e9] min-h-screen flex flex-col max-w-[440px] mx-auto relative">
+    <div className="bg-[#dae1e9] min-h-screen flex flex-col max-w-[440px] mx-auto relative pb-24">
       {/* Header */}
       <Header />
 
@@ -59,10 +92,10 @@ export function ProfileScreen() {
             </div>
             <div className="flex-1">
               <h2 className="font-semibold text-[18px] text-[#3e4855] tracking-[-0.54px]">
-                John Doe
+                {profile?.full_name || "User"}
               </h2>
               <p className="text-[12px] text-[#8b99ac] tracking-[-0.24px] mt-1">
-                john.doe@example.com
+                {profile?.email || user?.email}
               </p>
             </div>
           </div>
@@ -78,26 +111,26 @@ export function ProfileScreen() {
           <div className="grid grid-cols-3 gap-4">
             <div className="text-center">
               <p className="text-[20px] font-semibold text-[#3e4855] tracking-[-0.6px]">
-                47
+                {totalBets}
               </p>
               <p className="text-[11px] text-[#8b99ac] tracking-[-0.22px] mt-1">
                 Total Bets
               </p>
             </div>
-            <div className="text-center">
-              <p className="text-[20px] font-semibold text-[#4ade80] tracking-[-0.6px]">
-                62%
+            <div className="text-center border-x border-[#f0f2f5]">
+              <p className="text-[20px] font-semibold text-[#10b981] tracking-[-0.6px]">
+                0%
               </p>
               <p className="text-[11px] text-[#8b99ac] tracking-[-0.22px] mt-1">
                 Win Rate
               </p>
             </div>
             <div className="text-center">
-              <p className="text-[20px] font-semibold text-[#4ade80] tracking-[-0.6px]">
-                €487
+              <p className="text-[20px] font-semibold text-[#3e4855] tracking-[-0.6px]">
+                0
               </p>
               <p className="text-[11px] text-[#8b99ac] tracking-[-0.22px] mt-1">
-                Total Profit
+                Points
               </p>
             </div>
           </div>
@@ -105,48 +138,51 @@ export function ProfileScreen() {
       </div>
 
       {/* Menu Items */}
-      <div className="flex-1 px-4 mt-6 space-y-3 pb-24">
-        {menuItems.map((item, index) => {
-          const Icon = item.icon;
-          return (
-            <button
+      <div className="px-4 mt-4">
+        <div className="bg-white rounded-[20px] shadow-[0px_13px_36px_0px_rgba(80,82,113,0.2)] overflow-hidden">
+          {menuItems.map((item, index) => (
+            <div
               key={index}
-              className="w-full bg-white rounded-[16px] shadow-[0px_4px_12px_0px_rgba(80,82,113,0.1)] p-4 flex items-center gap-4 hover:shadow-[0px_8px_16px_0px_rgba(80,82,113,0.15)] transition-shadow"
+              className={`p-4 flex items-center gap-4 hover:bg-gray-50 transition-colors cursor-pointer ${
+                index !== menuItems.length - 1 ? "border-b border-[#f0f2f5]" : ""
+              }`}
             >
-              <div className="size-10 bg-[#f1f3f5] rounded-full flex items-center justify-center flex-shrink-0">
-                <Icon className="size-5 text-[#3e4855]" />
+              <div className="bg-[#f0f2f5] p-2 rounded-full text-[#3e4855]">
+                <item.icon className="size-5" />
               </div>
-              <div className="flex-1 text-left">
-                <p className="font-semibold text-[14px] text-[#3e4855] tracking-[-0.28px]">
+              <div className="flex-1">
+                <p className="font-medium text-[#3e4855] text-[14px]">
                   {item.label}
                 </p>
-                <p className="text-[11px] text-[#8b99ac] tracking-[-0.22px] mt-0.5">
+                <p className="text-[11px] text-[#8b99ac] mt-0.5">
                   {item.description}
                 </p>
               </div>
-              <ChevronRight className="size-5 text-[#bcc2c9] flex-shrink-0" />
-            </button>
-          );
-        })}
-
-        {/* Logout Button */}
-        <button className="w-full bg-white rounded-[16px] shadow-[0px_4px_12px_0px_rgba(80,82,113,0.1)] p-4 flex items-center gap-4 hover:shadow-[0px_8px_16px_0px_rgba(80,82,113,0.15)] transition-shadow border-2 border-[#fee2e2]">
-          <div className="size-10 bg-[#fee2e2] rounded-full flex items-center justify-center flex-shrink-0">
-            <LogOut className="size-5 text-[#dc2626]" />
+              <ChevronRight className="size-4 text-[#8b99ac]" />
+            </div>
+          ))}
+          
+          {/* Sign Out Button */}
+          <div
+            className="p-4 flex items-center gap-4 hover:bg-red-50 transition-colors cursor-pointer border-t border-[#f0f2f5]"
+            onClick={handleSignOut}
+          >
+            <div className="bg-red-100 p-2 rounded-full text-red-600">
+              <LogOut className="size-5" />
+            </div>
+            <div className="flex-1">
+              <p className="font-medium text-red-600 text-[14px]">
+                Sign Out
+              </p>
+              <p className="text-[11px] text-red-400 mt-0.5">
+                Log out of your account
+              </p>
+            </div>
+            <ChevronRight className="size-4 text-red-400" />
           </div>
-          <div className="flex-1 text-left">
-            <p className="font-semibold text-[14px] text-[#dc2626] tracking-[-0.28px]">
-              Log Out
-            </p>
-            <p className="text-[11px] text-[#8b99ac] tracking-[-0.22px] mt-0.5">
-              Sign out of your account
-            </p>
-          </div>
-          <ChevronRight className="size-5 text-[#dc2626] flex-shrink-0" />
-        </button>
+        </div>
       </div>
 
-      {/* Bottom Navigation */}
       <div className="fixed bottom-0 left-0 right-0 max-w-[440px] mx-auto">
         <BottomNav />
       </div>

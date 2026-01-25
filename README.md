@@ -92,7 +92,7 @@ A modern, mobile-first football betting matches application featuring Champions 
 
 1. **Clone the repository**
 ```bash
-git clone https://github.com/malah-akh/football-betting-app.git
+git clone https://github.com/YOUR_USERNAME/football-betting-app.git
 cd football-betting-app
 ```
 

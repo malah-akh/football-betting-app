@@ -1,6 +1,30 @@
 import svgPaths from "@/imports/svg-hmknk0ergo";
+import { useState } from "react";
+import { format, addDays } from "date-fns";
 
-export function DateSelector() {
+interface DateSelectorProps {
+  onDateChange?: (date: Date) => void;
+}
+
+export function DateSelector({ onDateChange }: DateSelectorProps) {
+  const [selectedIndex, setSelectedIndex] = useState(0);
+  const today = new Date();
+
+  const dates = [0, 1, 2].map((offset) => {
+    const date = addDays(today, offset);
+    return {
+      label: offset === 0 ? "Today" : format(date, "MM/dd"),
+      value: date,
+    };
+  });
+
+  const handleDateClick = (index: number, date: Date) => {
+    setSelectedIndex(index);
+    if (onDateChange) {
+      onDateChange(date);
+    }
+  };
+
   return (
     <div className="flex items-center justify-between px-4 mt-6">
       <div className="flex items-center gap-2">
@@ -19,20 +43,24 @@ export function DateSelector() {
 
         {/* Date Buttons */}
         <div className="flex items-center gap-3">
-          {/* Today - Active */}
-          <button className="bg-[#bcc2c9] rounded-lg px-3 py-1.5">
-            <p className="font-bold text-[14px] text-[#3e4855] tracking-[-0.28px]">Today</p>
-          </button>
-
-          {/* 12/13 */}
-          <button className="border border-[#3e4855] border-solid rounded-lg px-3 py-1.5">
-            <p className="font-bold text-[14px] text-[#3e4855] tracking-[-0.28px]">12/13</p>
-          </button>
-
-          {/* 12/14 */}
-          <button className="border border-[#3e4855] border-solid rounded-lg px-3 py-1.5">
-            <p className="font-bold text-[14px] text-[#3e4855] tracking-[-0.28px]">12/14</p>
-          </button>
+          {dates.map((item, index) => {
+            const isActive = index === selectedIndex;
+            return (
+              <button
+                key={index}
+                onClick={() => handleDateClick(index, item.value)}
+                className={
+                  isActive
+                    ? "bg-[#bcc2c9] rounded-lg px-3 py-1.5"
+                    : "border border-[#3e4855] border-solid rounded-lg px-3 py-1.5"
+                }
+              >
+                <p className="font-bold text-[14px] text-[#3e4855] tracking-[-0.28px]">
+                  {item.label}
+                </p>
+              </button>
+            );
+          })}
         </div>
       </div>
 
