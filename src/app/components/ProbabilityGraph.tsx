@@ -30,7 +30,7 @@ export function ProbabilityGraph({ odds, onSelect, selection }: ProbabilityGraph
           <span className="text-[14px] font-bold text-[#3e4855]">{getProb(odds.home_win)}%</span>
         </DonutChart>
         <span className="text-[12px] text-[#6b7280] mt-2 mb-1">Win</span>
-        <span className="text-[13px] font-bold text-[#3e4855]">@{odds.home_win?.toFixed(2)}</span>
+        <span className="text-[13px] font-bold text-[#3e4855]">{typeof odds.home_win === 'number' ? `@${odds.home_win.toFixed(2)}` : '-'}</span>
       </div>
 
       {/* Draw */}
@@ -45,7 +45,7 @@ export function ProbabilityGraph({ odds, onSelect, selection }: ProbabilityGraph
            <span className="text-[14px] font-bold text-[#3e4855]">{getProb(odds.draw)}%</span>
         </DonutChart>
         <span className="text-[12px] text-[#6b7280] mt-2 mb-1">Draw</span>
-        <span className="text-[13px] font-bold text-[#3e4855]">@{odds.draw?.toFixed(2)}</span>
+        <span className="text-[13px] font-bold text-[#3e4855]">{typeof odds.draw === 'number' ? `@${odds.draw.toFixed(2)}` : '-'}</span>
       </div>
 
       {/* Away Win */}
@@ -60,7 +60,7 @@ export function ProbabilityGraph({ odds, onSelect, selection }: ProbabilityGraph
            <span className="text-[14px] font-bold text-[#3e4855]">{getProb(odds.away_win)}%</span>
         </DonutChart>
         <span className="text-[12px] text-[#6b7280] mt-2 mb-1">Win</span>
-        <span className="text-[13px] font-bold text-[#3e4855]">@{odds.away_win?.toFixed(2)}</span>
+        <span className="text-[13px] font-bold text-[#3e4855]">{typeof odds.away_win === 'number' ? `@${odds.away_win.toFixed(2)}` : '-'}</span>
       </div>
     </div>
   );

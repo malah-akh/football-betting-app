@@ -284,7 +284,9 @@ export function MatchDetailScreen() {
                selection={selection}
                onSelect={(s, o) => {
                  setSelection(s);
-                 setOdds(o.toFixed(2));
+                 if (typeof o === 'number') {
+                    setOdds(o.toFixed(2));
+                 }
                }}
              />
           ) : (

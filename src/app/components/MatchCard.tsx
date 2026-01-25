@@ -131,15 +131,15 @@ export function MatchCard({
         <div className="flex justify-center gap-2 pt-1">
             <Badge variant="secondary" className="flex gap-2 text-xs px-3 py-1 bg-slate-100 hover:bg-slate-200">
                 <span className="text-slate-400 font-medium">1</span>
-                <span className="font-bold text-slate-700">{odds.home.toFixed(2)}</span>
+                <span className="font-bold text-slate-700">{typeof odds.home === 'number' ? odds.home.toFixed(2) : '-'}</span>
             </Badge>
             <Badge variant="secondary" className="flex gap-2 text-xs px-3 py-1 bg-slate-100 hover:bg-slate-200">
                 <span className="text-slate-400 font-medium">X</span>
-                <span className="font-bold text-slate-700">{odds.draw.toFixed(2)}</span>
+                <span className="font-bold text-slate-700">{typeof odds.draw === 'number' ? odds.draw.toFixed(2) : '-'}</span>
             </Badge>
             <Badge variant="secondary" className="flex gap-2 text-xs px-3 py-1 bg-slate-100 hover:bg-slate-200">
                 <span className="text-slate-400 font-medium">2</span>
-                <span className="font-bold text-slate-700">{odds.away.toFixed(2)}</span>
+                <span className="font-bold text-slate-700">{typeof odds.away === 'number' ? odds.away.toFixed(2) : '-'}</span>
             </Badge>
         </div>
       )}
@@ -168,7 +168,7 @@ export function MatchCard({
                            <span>{tip.selection}</span>
                         </div>
                         <div className="flex flex-col items-end">
-                            <span className="bg-white px-2 py-0.5 rounded shadow-sm text-xs">@{tip.odds.toFixed(2)}</span>
+                            <span className="bg-white px-2 py-0.5 rounded shadow-sm text-xs">@{typeof tip.odds === 'number' ? tip.odds.toFixed(2) : '-'}</span>
                         </div>
                     </div>
 

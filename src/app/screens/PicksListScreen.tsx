@@ -183,18 +183,7 @@ export function PicksListScreen() {
       <TabBar />
 
       {/* Date Selector and Filter */}
-      <div className="flex items-center justify-between px-4 mt-6">
-        <div className="flex items-center gap-2">
-          <Calendar className="size-5 text-[#3e4855]" />
-          <DateSelector />
-        </div>
-        <button className="flex items-center gap-2 text-[#3e4855] hover:opacity-70 transition-opacity">
-          <SlidersHorizontal className="size-4" />
-          <span className="font-semibold text-[14px] tracking-[-0.28px]">
-            Filter
-          </span>
-        </button>
-      </div>
+      <DateSelector />
 
       {/* Matches List */}
       <div className="flex-1 px-4 mt-6 space-y-4 pb-24">

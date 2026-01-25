@@ -55,6 +55,166 @@ When extracting a new icon:
 1.  Check if it exists in `src/imports`.
 2.  If creating new icons, prefer using `lucide-react` or follow the `svgPaths` object pattern for consistency.
 
+## 🧠 Domain Knowledge: Football Betting Model
+
+### 1. What a football bet is
+
+A bet = **prediction + odds + stake**.
+
+*   **Prediction**: an outcome you think will happen.
+*   **Odds**: how much the market pays if you’re right.
+*   **Stake**: money placed on that prediction.
+
+Payout formula (core invariant):
+`Return = Stake × Odds`
+`Profit = (Stake × Odds) − Stake`
+
+No exception. Everything else is packaging.
+
+### 2. Core football bet types (the ones that matter)
+
+#### 2.1 Match Result (1X2)
+
+*   **1** = Home win
+*   **X** = Draw
+*   **2** = Away win
+
+Example: Odds 2.10 on Home win.
+€10 → €21 return → €11 profit.
+
+#### 2.2 Over / Under (Totals)
+
+Bet on **total goals**.
+
+*   Over 2.5 goals
+*   Under 2.5 goals
+
+2.5 avoids draws.
+3 goals = Over wins.
+2 goals = Under wins.
+
+#### 2.3 Both Teams to Score (BTTS)
+
+*   Yes
+*   No
+
+Independent of winner.
+1–1, 2–1, 3–2 → **Yes**
+
+#### 2.4 Asian Handicap (professional backbone)
+
+Removes draw by adding/subtracting goals.
+
+Examples:
+
+*   Team A −0.5 → must win
+*   Team A −1 → win by 2 goals
+*   Team B +1 → can lose by 1 and still push/win
+
+This is **sharp betting** territory.
+
+#### 2.5 Double Chance
+
+Risk-reduced outcomes:
+
+*   1X
+*   X2
+*   12
+
+Lower odds, higher hit rate.
+
+### 3. Odds = probability + margin
+
+Odds are **implied probability**:
+
+Formula:
+`Implied Probability = 1 / Odds`
+
+Example:
+
+*   Odds 2.00 → 50%
+*   Odds 1.50 → 66.6%
+*   Odds 3.00 → 33.3%
+
+Bookmakers add **margin (vig)** so total probabilities > 100%.
+
+Your system lives or dies here.
+
+### 4. Tipster systems (this is your product layer)
+
+A tip platform **does not place bets**. It sells **information + confidence**.
+
+Core tip formats:
+
+*   Single picks
+*   Accumulators (parlays)
+*   Daily cards
+*   Monthly strategies
+
+Critical attributes per tip:
+
+*   Market type
+*   Odds at release
+*   Confidence level
+*   Stake unit
+*   Timestamp
+
+Without these, it’s noise.
+
+### 5. Bankroll logic (non-negotiable)
+
+Tipsters do **units**, not money.
+
+Example:
+
+*   Bank = 100 units
+*   Standard bet = 1–3 units
+*   High conviction = 4–5 units
+
+This allows scaling without emotional bias.
+
+### 6. What makes a system credible
+
+Mandatory metrics:
+
+*   ROI
+*   Yield
+*   Drawdown
+*   Closing Line Value (CLV)
+*   Historical sample size
+
+Without verified tracking, it’s gambling theatre.
+
+### 7. Platform mental split (important)
+
+Separate layers:
+
+1.  **Betting mechanics** (rules, odds, outcomes)
+2.  **Tip logic** (why a pick exists)
+3.  **Risk & staking model**
+4.  **User trust & transparency**
+5.  **Compliance & disclaimers**
+
+If you mix them, the platform collapses.
+
+### 8. Core Philosophy
+
+**We don’t try to guess matches.**
+**We only publish tips when the odds offered are higher than the real probability.**
+
+#### Internal rule you must never break
+
+If you cannot explain a tip without team emotion, the tip is invalid.
+
+A correct explanation always sounds like:
+
+“The market prices this at X.
+Our data supports Y.
+The gap is Z.
+Therefore the bet exists.”
+
+That framing scales.
+
 ## 🚀 Workflows
 
 - **Dev Server**: `pnpm dev`
