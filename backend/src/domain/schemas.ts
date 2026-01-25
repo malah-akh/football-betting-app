@@ -82,9 +82,14 @@ export type InsertMatch = z.infer<typeof InsertMatchSchema>;
 export const TipSchema = z.object({
   id: z.string().uuid().optional(), // Optional for inserts
   match_id: z.string().uuid(),
-  market: z.enum(["1X2", "Over/Under", "BTTS", "Asian Handicap", "Double Chance"]),
+  market: z.enum(["1X2", "Over/Under", "BTTS", "Asian Handicap", "Double Chance", "Correct Score", "Other"]),
   selection: z.string().min(1),
   odds: z.number().positive(),
+  
+  // Structured Market Data
+  line: z.number().nullable().optional(),
+  side: z.string().nullable().optional(),
+  implied_probability: z.number().min(0).max(1).optional(),
   
   // Money Management
   stake: z.number().int().min(1).max(10),

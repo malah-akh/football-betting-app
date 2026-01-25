@@ -197,6 +197,10 @@ export function MissionControlScreen() {
     }
   }
 
+  const handleTipSaved = () => {
+    fetchMatchesAndTips(selectedDate);
+  };
+
   return (
     <div className="flex flex-col min-h-screen bg-background pb-20">
       <Header />

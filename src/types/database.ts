@@ -138,6 +138,13 @@ export interface Database {
           confidence: number
           bookmaker: string | null
           content: Json
+          real_probability: number | null
+          value_edge: number | null
+          closing_odds: number | null
+          line: number | null
+          side: string | null
+          implied_probability: number | null
+          roi: number | null
         }
         Insert: {
           id?: string
@@ -153,6 +160,13 @@ export interface Database {
           confidence?: number
           bookmaker?: string | null
           content?: Json
+          real_probability?: number | null
+          value_edge?: number | null
+          closing_odds?: number | null
+          line?: number | null
+          side?: string | null
+          implied_probability?: number | null
+          roi?: number | null
         }
         Update: {
           id?: string
@@ -168,6 +182,13 @@ export interface Database {
           confidence?: number
           bookmaker?: string | null
           content?: Json
+          real_probability?: number | null
+          value_edge?: number | null
+          closing_odds?: number | null
+          line?: number | null
+          side?: string | null
+          implied_probability?: number | null
+          roi?: number | null
         }
       }
       favorites: {

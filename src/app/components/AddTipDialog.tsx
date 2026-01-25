@@ -5,6 +5,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
   DialogTrigger,
   DialogFooter,
 } from "@/app/components/ui/dialog";
@@ -41,6 +42,9 @@ export function AddTipDialog({ match, existingTip, onSave }: AddTipDialogProps) 
   
   // New fields
   const [market, setMarket] = useState(existingTip?.market || "Match Winner");
+  const [line, setLine] = useState(existingTip?.line || "");
+  const [side, setSide] = useState(existingTip?.side || "");
+  
   const [stake, setStake] = useState([existingTip?.stake || 1]);
   const [confidence, setConfidence] = useState([existingTip?.confidence || 75]);
   const [bookmaker, setBookmaker] = useState(existingTip?.bookmaker || "");
@@ -53,12 +57,23 @@ export function AddTipDialog({ match, existingTip, onSave }: AddTipDialogProps) 
 
   // Derived Value Calculation
   const parsedOdds = parseFloat(odds);
-  const parsedProb = parseFloat(realProbability);
-  // (Odds * Prob) - 1. E.g. (2.00 * 0.55) - 1 = 1.1 - 1 = 0.10 (10% edge)
-  const valueEdge = !isNaN(parsedOdds) && !isNaN(parsedProb) 
-    ? ((parsedOdds * (parsedProb / 100)) - 1).toFixed(3)
-    : null;
-  const isValueBet = valueEdge && parseFloat(valueEdge) > 0;
+  const parsedProb = parseFloat(realProbability); // Your Prob %
+  const parsedLine = parseFloat(line);
+  
+  // 5. Implied probability (derived)
+  const impliedProb = !isNaN(parsedOdds) && parsedOdds > 1 ? (1 / parsedOdds) : 0;
+  const impliedProbPercent = impliedProb * 100;
+  
+  // 6. Edge calculation (must exist)
+  // Edge = Your Probability - Implied Probability
+  const edgeRaw = !isNaN(parsedProb) && impliedProb > 0 
+    ? (parsedProb / 100) - impliedProb 
+    : -1;
+    
+  const edgePercent = edgeRaw * 100;
+  
+  // Rule: Edge <= 0 -> no tip
+  const isPositiveEV = edgeRaw > 0;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -71,6 +86,12 @@ export function AddTipDialog({ match, existingTip, onSave }: AddTipDialogProps) 
         return;
       }
       
+      if (!isPositiveEV) {
+        alert("Strict Rule: Edge must be positive (> 0%). No negative EV tips allowed.");
+        setLoading(false);
+        return;
+      }
+      
       const tipData = {
         match_id: match.id,
         selection,
@@ -79,11 +100,14 @@ export function AddTipDialog({ match, existingTip, onSave }: AddTipDialogProps) 
         is_premium: isPremium,
         status: existingTip?.status || 'PENDING',
         market,
+        line: !isNaN(parsedLine) ? parsedLine : null,
+        side: side || null,
         stake: stake[0],
         confidence: confidence[0],
         bookmaker,
         real_probability: parsedProb ? parsedProb / 100 : null,
-        value_edge: valueEdge ? parseFloat(valueEdge) : null,
+        implied_probability: impliedProb > 0 ? impliedProb : null,
+        value_edge: edgeRaw, // Storing decimal edge
         content: {
           ...existingTip?.content,
           keyFactors: keyFactors.split("\n").filter((f: string) => f.trim() !== ""),
@@ -127,6 +151,11 @@ export function AddTipDialog({ match, existingTip, onSave }: AddTipDialogProps) 
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>{existingTip ? "Edit Tip" : "Add Tip"}</DialogTitle>
+          <DialogDescription>
+            {existingTip 
+              ? "Update the details of your prediction. Ensure reasoning is sound." 
+              : " create a new prediction based on value and probability."}
+          </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="grid gap-4 py-4">
           
