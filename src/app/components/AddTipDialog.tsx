@@ -24,12 +24,32 @@ import {
   SelectLabel,
 } from "@/app/components/ui/select";
 import { Slider } from "@/app/components/ui/slider";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/app/components/ui/tooltip";
+import { Info } from "lucide-react";
 
 interface AddTipDialogProps {
   match: any;
   existingTip?: any;
   onSave: () => void;
 }
+
+const InfoTooltip = ({ content }: { content: string }) => (
+  <TooltipProvider>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Info className="h-3 w-3 text-muted-foreground/70 hover:text-primary cursor-help" />
+      </TooltipTrigger>
+      <TooltipContent>
+        <p className="max-w-[200px] text-xs font-normal">{content}</p>
+      </TooltipContent>
+    </Tooltip>
+  </TooltipProvider>
+);
 
 export function AddTipDialog({ match, existingTip, onSave }: AddTipDialogProps) {
   const [open, setOpen] = useState(false);
@@ -148,21 +168,24 @@ export function AddTipDialog({ match, existingTip, onSave }: AddTipDialogProps) 
           {existingTip ? "Edit Tip" : "Add Tip"}
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>{existingTip ? "Edit Tip" : "Add Tip"}</DialogTitle>
           <DialogDescription>
             {existingTip 
               ? "Update the details of your prediction. Ensure reasoning is sound." 
-              : " create a new prediction based on value and probability."}
+              : "Create a new prediction based on value and probability."}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="grid gap-4 py-4">
           
           <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="market" className="text-right">
-              Market
-            </Label>
+            <div className="flex items-center justify-end gap-2 col-span-1">
+               <InfoTooltip content="The specific betting market (e.g. Match Winner, Over/Under)." />
+               <Label htmlFor="market" className="text-right">
+                  Market
+               </Label>
+            </div>
             <Select value={market} onValueChange={setMarket}>
               <SelectTrigger className="col-span-3">
                 <SelectValue placeholder="Select market" />
@@ -222,7 +245,10 @@ export function AddTipDialog({ match, existingTip, onSave }: AddTipDialogProps) 
           {/* Structured Market Inputs */}
           {(market.includes("Over") || market.includes("Under") || market.includes("Handicap") || market.includes("Goals")) && (
              <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="line" className="text-right">Line</Label>
+              <div className="flex items-center justify-end gap-2 col-span-1">
+                 <InfoTooltip content="The threshold value (e.g. 2.5 for Over 2.5 Goals, -1.0 for Handicap)." />
+                 <Label htmlFor="line" className="text-right">Line</Label>
+              </div>
               <Input
                 id="line"
                 type="number" 
@@ -236,7 +262,10 @@ export function AddTipDialog({ match, existingTip, onSave }: AddTipDialogProps) 
           )}
           
           <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="side" className="text-right">Selection</Label>
+             <div className="flex items-center justify-end gap-2 col-span-1">
+                 <InfoTooltip content="The specific outcome you are betting on (e.g. Home, Over, Team A)." />
+                 <Label htmlFor="side" className="text-right">Selection</Label>
+             </div>
              <div className="col-span-3 flex gap-2">
                 <Input
                   id="side"
@@ -257,9 +286,10 @@ export function AddTipDialog({ match, existingTip, onSave }: AddTipDialogProps) 
           </div>
 
           <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="odds" className="text-right">
-              Odds @ Release
-            </Label>
+            <div className="flex items-center justify-end gap-2 col-span-1">
+                 <InfoTooltip content="The exact odds available at the time of publishing. Must match bookmaker." />
+                 <Label htmlFor="odds" className="text-right">Odds</Label>
+            </div>
             <div className="col-span-3 flex gap-2">
               <Input
                 id="odds"
@@ -278,7 +308,10 @@ export function AddTipDialog({ match, existingTip, onSave }: AddTipDialogProps) 
           </div>
           
            <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="bookmaker" className="text-right">Bookmaker</Label>
+            <div className="flex items-center justify-end gap-2 col-span-1">
+                 <InfoTooltip content="The bookmaker offering these odds." />
+                 <Label htmlFor="bookmaker" className="text-right">Bookmaker</Label>
+            </div>
              <Input
                 id="bookmaker"
                 value={bookmaker}
@@ -289,9 +322,10 @@ export function AddTipDialog({ match, existingTip, onSave }: AddTipDialogProps) 
           </div>
 
           <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="realProbability" className="text-right font-bold text-primary">
-              My Probability
-            </Label>
+            <div className="flex items-center justify-end gap-2 col-span-1">
+                 <InfoTooltip content="Your calculated probability of this outcome winning. Used to calculate edge." />
+                 <Label htmlFor="realProbability" className="text-right font-bold text-primary">My Prob</Label>
+            </div>
             <div className="col-span-3 flex items-center gap-2">
                <div className="relative flex-1">
                 <Input
@@ -328,7 +362,10 @@ export function AddTipDialog({ match, existingTip, onSave }: AddTipDialogProps) 
           )}
 
           <div className="grid grid-cols-4 items-center gap-4">
-            <Label className="text-right">Stake ({stake})</Label>
+            <div className="flex items-center justify-end gap-2 col-span-1">
+                 <InfoTooltip content="The risk level in units (1-5). 1 Unit = 1% of bankroll." />
+                 <Label className="text-right">Stake ({stake})</Label>
+            </div>
             <Slider
               value={stake}
               onValueChange={setStake}
@@ -340,7 +377,10 @@ export function AddTipDialog({ match, existingTip, onSave }: AddTipDialogProps) 
           </div>
 
           <div className="grid grid-cols-4 items-center gap-4">
-            <Label className="text-right">Conf ({confidence}%)</Label>
+            <div className="flex items-center justify-end gap-2 col-span-1">
+                 <InfoTooltip content="Your subjective confidence level in this tip." />
+                 <Label className="text-right">Conf ({confidence}%)</Label>
+            </div>
             <Slider
               value={confidence}
               onValueChange={setConfidence}
@@ -352,9 +392,10 @@ export function AddTipDialog({ match, existingTip, onSave }: AddTipDialogProps) 
           </div>
 
           <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="analysis" className="text-right">
-              Summary
-            </Label>
+            <div className="flex items-center justify-end gap-2 col-span-1">
+                 <InfoTooltip content="A short hook explaining why this bet has value." />
+                 <Label htmlFor="analysis" className="text-right">Summary</Label>
+            </div>
             <Textarea
               id="analysis"
               value={analysis}
@@ -365,9 +406,10 @@ export function AddTipDialog({ match, existingTip, onSave }: AddTipDialogProps) 
           </div>
 
           <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="keyFactors" className="text-right">
-              Key Factors
-            </Label>
+             <div className="flex items-center justify-end gap-2 col-span-1">
+                 <InfoTooltip content="Bullet points of data-driven reasons (injuries, form, etc.)." />
+                 <Label htmlFor="keyFactors" className="text-right">Key Factors</Label>
+            </div>
             <Textarea
               id="keyFactors"
               value={keyFactors}
@@ -378,9 +420,10 @@ export function AddTipDialog({ match, existingTip, onSave }: AddTipDialogProps) 
           </div>
 
           <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="premium" className="text-right">
-              Premium
-            </Label>
+            <div className="flex items-center justify-end gap-2 col-span-1">
+                 <InfoTooltip content="Premium tips are visible only to subscribers." />
+                 <Label htmlFor="premium" className="text-right">Premium</Label>
+            </div>
             <div className="flex items-center space-x-2 col-span-3">
               <Switch
                 id="premium"
