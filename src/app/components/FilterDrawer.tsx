@@ -11,7 +11,6 @@ import {
 } from "@/app/components/ui/drawer";
 import { Switch } from "@/app/components/ui/switch";
 import { Label } from "@/app/components/ui/label";
-import { ScrollArea } from "@/app/components/ui/scroll-area";
 import { cn } from "@/app/components/ui/utils";
 import { Search } from "lucide-react";
 

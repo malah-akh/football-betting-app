@@ -368,7 +368,7 @@ export function HomeScreen() {
         onApply={setFilters}
         onReset={() => setFilters({
             status: "ALL",
-            country: null,
+            country: [],
             league: null,
             hasTip: false,
             premiumOnly: false,
