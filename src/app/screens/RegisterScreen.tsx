@@ -45,8 +45,10 @@ export function RegisterScreen() {
         throw error;
       }
 
-      if (data.session) {
-        // Auto-confirmed (e.g. if email confirmation is disabled)
+      const shouldSkipEmailConfirmation = import.meta.env.VITE_SKIP_EMAIL_CONFIRMATION === 'true';
+
+      if (data.session || (data.user && shouldSkipEmailConfirmation)) {
+        // Auto-confirmed (e.g. if email confirmation is disabled) or intentionally skipped
         navigate("/profile");
       } else if (data.user) {
         // Email confirmation required
