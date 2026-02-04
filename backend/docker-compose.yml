@@ -1,7 +1,7 @@
 version: '3.7'
 services:
   redpanda:
-    image: docker.redpanda.com/redpandadata/redpanda:v23.2.14
+    image: docker.redpanda.com/redpandadata/redpanda:v25.3.6
     container_name: redpanda
     command:
       - redpanda
@@ -30,7 +30,7 @@ services:
       retries: 5
 
   console:
-    image: docker.redpanda.com/redpandadata/console:v2.3.1
+    image: docker.redpanda.com/redpandadata/console:v3.5.0
     container_name: redpanda-console
     entrypoint: /bin/sh
     command: 

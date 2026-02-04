@@ -235,7 +235,7 @@ export function MissionControlScreen() {
                         >
                           {selectedLeagueId === "all"
                             ? "All Leagues"
-                            : leagues.find((l) => String(l.external_id) === selectedLeagueId)?.name || "Select League..."}
+                            : leagues.find((l) => String(l.id) === selectedLeagueId)?.name || "Select League..."}
                           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                         </Button>
                       </PopoverTrigger>
@@ -265,14 +265,14 @@ export function MissionControlScreen() {
                                   key={l.id}
                                   value={`${l.name} ${l.country}`}
                                   onSelect={() => {
-                                    setSelectedLeagueId(String(l.external_id));
+                                    setSelectedLeagueId(String(l.id));
                                     setOpen(false);
                                   }}
                                 >
                                   <Check
                                     className={cn(
                                       "mr-2 h-4 w-4",
-                                      String(l.external_id) === selectedLeagueId ? "opacity-100" : "opacity-0"
+                                      String(l.id) === selectedLeagueId ? "opacity-100" : "opacity-0"
                                     )}
                                   />
                                   {l.name}
