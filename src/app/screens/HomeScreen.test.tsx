@@ -1,7 +1,7 @@
-import { render, waitFor } from '@testing-library/react';
+import { waitFor } from '@testing-library/react';
 import { HomeScreen } from './HomeScreen';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { MemoryRouter } from 'react-router';
+import { renderWithProviders } from '@/test/utils';
 import { supabase } from '@/lib/supabase';
 
 // Mock supabase
@@ -33,6 +33,7 @@ vi.mock('@/app/components/BottomNav', () => ({ BottomNav: () => <div>BottomNav</
 vi.mock('@/app/components/PremiumCard', () => ({ PremiumCard: () => <div>PremiumCard</div> }));
 vi.mock('@/app/components/UnlockPremiumCard', () => ({ UnlockPremiumCard: () => <div>UnlockPremiumCard</div> }));
 vi.mock('@/app/components/PremiumModal', () => ({ PremiumModal: () => <div>PremiumModal</div> }));
+vi.mock('@/app/components/FilterDrawer', () => ({ FilterDrawer: () => <div>FilterDrawer</div> }));
 
 describe('HomeScreen', () => {
     beforeEach(() => {
@@ -44,24 +45,20 @@ describe('HomeScreen', () => {
         const lteMock = vi.fn(() => ({ order: orderMock }));
         const gteMock = vi.fn(() => ({ lte: lteMock }));
         const eqMock = vi.fn(() => ({ data: [] })); // For favorites query
-        const selectMock = vi.fn(() => ({ 
+        const selectMock = vi.fn(() => ({
             gte: gteMock,
-            eq: eqMock 
+            eq: eqMock
         }));
         const fromMock = vi.fn(() => ({ select: selectMock }));
 
         (supabase.from as any).mockImplementation(fromMock);
 
-        render(
-            <MemoryRouter>
-                <HomeScreen />
-            </MemoryRouter>
-        );
+        renderWithProviders(<HomeScreen />);
 
         await waitFor(() => {
             expect(fromMock).toHaveBeenCalledWith('matches');
         });
-        
+
         // Verify select was called with the correct string
         const selectQuery = (selectMock.mock.calls[0] as unknown as any[])[0];
         expect(selectQuery).toContain('tips!inner');

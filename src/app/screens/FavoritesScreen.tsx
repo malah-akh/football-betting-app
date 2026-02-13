@@ -1,96 +1,20 @@
-import { useState, useEffect } from "react";
 import { useNavigate } from "react-router";
 import { Header } from "@/app/components/Header";
 import { BottomNav } from "@/app/components/BottomNav";
 import { MatchCard } from "@/app/components/MatchCard";
-import { useAuth } from "@/app/context/AuthContext";
-import { supabase } from "@/lib/supabase";
+import { useFavoriteMatches } from "@/app/hooks/useFavoriteMatches";
+import { useToggleFavorite } from "@/app/hooks/useToggleFavorite";
 import { Heart } from "lucide-react";
-import { formatMatchTime } from "@/app/components/ui/utils";
 
 export function FavoritesScreen() {
   const navigate = useNavigate();
-  const { user } = useAuth();
-  const [matches, setMatches] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: matches = [], isLoading } = useFavoriteMatches();
+  const toggleFav = useToggleFavorite();
 
-  useEffect(() => {
-    if (user) {
-      fetchFavorites();
-    }
-  }, [user]);
-
-  async function fetchFavorites() {
-    try {
-      setLoading(true);
-      const { data, error } = await supabase
-        .from('favorites')
-        .select(`
-          match_id,
-          matches (
-            *,
-            leagues (
-              name,
-              country,
-              logo_url
-            ),
-            odds (*)
-          )
-        `)
-        .eq('user_id', user!.id);
-
-      if (error) throw error;
-
-      if (data) {
-        const mappedMatches = data
-          .map((item: any) => item.matches)
-          .filter((m: any) => m)
-          .map((m: any) => {
-             const matchOdds = m.odds && m.odds.length > 0 
-            ? {
-                home: m.odds[0].home_odd,
-                draw: m.odds[0].draw_odd,
-                away: m.odds[0].away_odd
-              }
-            : undefined;
-
-            return {
-              id: m.id,
-              league: m.leagues?.name || 'Unknown League',
-              country: m.leagues?.country || 'International',
-              leagueLogo: m.leagues?.logo_url,
-              location: m.venue?.city ? `${m.venue.city}, ${m.venue.name || ''}` : (m.leagues?.country || 'Unknown Location'),
-              time: formatMatchTime(m.start_time),
-              homeTeam: m.home_team?.name || 'Home Team',
-              homeTeamLogo: m.home_team?.logo,
-              awayTeam: m.away_team?.name || 'Away Team',
-              awayTeamLogo: m.away_team?.logo,
-              odds: matchOdds
-            };
-          });
-        setMatches(mappedMatches);
-      }
-    } catch (error) {
-      console.error("Error fetching favorites:", error);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  async function removeFavorite(matchId: string, e: React.MouseEvent) {
+  const removeFavorite = (matchId: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    try {
-      setMatches(prev => prev.filter(m => m.id !== matchId));
-      await supabase
-        .from('favorites')
-        .delete()
-        .eq('user_id', user!.id)
-        .eq('match_id', matchId);
-    } catch (error) {
-      console.error("Error removing favorite:", error);
-      fetchFavorites();
-    }
-  }
+    toggleFav.mutate({ matchId, isFavorite: true });
+  };
 
   const handleMatchClick = (matchId: string) => {
     navigate(`/match/${matchId}`);
@@ -109,7 +33,7 @@ export function FavoritesScreen() {
         </p>
       </div>
 
-      {loading ? (
+      {isLoading ? (
         <div className="flex-1 flex items-center justify-center">
           <p className="text-muted-foreground">Loading favorites...</p>
         </div>
@@ -128,8 +52,8 @@ export function FavoritesScreen() {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {countryMatches.map((match: any) => (
                   <div key={match.id} onClick={() => handleMatchClick(match.id)} className="cursor-pointer">
-                    <MatchCard 
-                      {...match} 
+                    <MatchCard
+                      {...match}
                       isFavorite={true}
                       onToggleFavorite={(e) => removeFavorite(match.id, e)}
                     />

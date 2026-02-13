@@ -1,11 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router";
 import { Header } from "@/app/components/Header";
 import { BottomNav } from "@/app/components/BottomNav";
 import { PremiumModal } from "@/app/components/PremiumModal";
 import { SubscriptionDetailsModal } from "@/app/components/SubscriptionDetailsModal";
 import { useAuth } from "@/app/context/AuthContext";
-import { supabase } from "@/lib/supabase";
+import { useUserPicksStats } from "@/app/hooks/useUserPicksStats";
 import {
   User,
   Wallet,
@@ -21,57 +21,12 @@ import {
 export function ProfileScreen() {
   const navigate = useNavigate();
   const { profile, user, signOut } = useAuth();
-  const [totalBets, setTotalBets] = useState(0);
-  const [winRate, setWinRate] = useState(0);
-  const [points, setPoints] = useState(0);
+  const { data: stats } = useUserPicksStats();
+  const totalBets = stats?.totalBets ?? 0;
+  const winRate = stats?.winRate ?? 0;
+  const points = stats?.points ?? 0;
   const [isPremiumModalOpen, setIsPremiumModalOpen] = useState(false);
   const [isSubscriptionDetailsOpen, setIsSubscriptionDetailsOpen] = useState(false);
-
-  useEffect(() => {
-    if (user) {
-      fetchStats();
-    }
-  }, [user]);
-
-  async function fetchStats() {
-    if (!user) return;
-    try {
-      const { data: picks, error } = await supabase
-        .from('picks')
-        .select('status, odds, stake')
-        .eq('user_id', user.id);
-      
-      if (error) throw error;
-      
-      if (picks) {
-        setTotalBets(picks.length);
-        
-        let wins = 0;
-        let settled = 0;
-        let totalPoints = 0;
-
-        picks.forEach(pick => {
-          const status = pick.status?.toLowerCase();
-          const stake = pick.stake || 1; // Default to 1 unit if not specified
-
-          if (status === 'won') {
-            wins++;
-            settled++;
-            totalPoints += stake * (pick.odds - 1);
-          } else if (status === 'lost') {
-            settled++;
-            totalPoints -= stake;
-          }
-        });
-
-        const rate = settled > 0 ? (wins / settled) * 100 : 0;
-        setWinRate(rate);
-        setPoints(totalPoints);
-      }
-    } catch (error) {
-      console.error("Error fetching stats:", error);
-    }
-  }
 
   const handleSignOut = async () => {
     await signOut();
@@ -132,10 +87,8 @@ export function ProfileScreen() {
 
   return (
     <div className="bg-[#dae1e9] min-h-screen flex flex-col w-full max-w-7xl mx-auto relative pb-24">
-      {/* Header */}
       <Header />
 
-      {/* Profile Header */}
       <div className="px-4 mt-4 w-full max-w-3xl mx-auto">
         <div className="bg-white rounded-[20px] shadow-[0px_13px_36px_0px_rgba(80,82,113,0.2)] p-6">
           <div className="flex items-center gap-4">
@@ -154,7 +107,6 @@ export function ProfileScreen() {
         </div>
       </div>
 
-      {/* Stats Overview */}
       <div className="px-4 mt-4 w-full max-w-3xl mx-auto">
         <div className="bg-white rounded-[20px] shadow-[0px_13px_36px_0px_rgba(80,82,113,0.2)] p-6">
           <h3 className="font-semibold text-[14px] text-[#3e4855] tracking-[-0.28px] mb-4">
@@ -189,7 +141,6 @@ export function ProfileScreen() {
         </div>
       </div>
 
-      {/* Menu Items */}
       <div className="px-4 mt-4 w-full max-w-3xl mx-auto">
         <div className="bg-white rounded-[20px] shadow-[0px_13px_36px_0px_rgba(80,82,113,0.2)] overflow-hidden">
           {menuItems.map((item, index) => (
@@ -217,8 +168,7 @@ export function ProfileScreen() {
               <ChevronRight className="size-4 text-[#8b99ac]" />
             </div>
           ))}
-          
-          {/* Sign Out Button */}
+
           <div
             className="p-4 flex items-center gap-4 hover:bg-red-50 transition-colors cursor-pointer border-t border-[#f0f2f5]"
             onClick={handleSignOut}
@@ -239,7 +189,7 @@ export function ProfileScreen() {
         </div>
       </div>
   <SubscriptionDetailsModal isOpen={isSubscriptionDetailsOpen} onClose={() => setIsSubscriptionDetailsOpen(false)} />
-    
+
       <div className="fixed bottom-0 left-0 right-0 w-full max-w-7xl mx-auto z-50">
         <BottomNav />
       </div>

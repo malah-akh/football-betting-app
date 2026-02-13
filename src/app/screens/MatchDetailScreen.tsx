@@ -6,23 +6,30 @@ import { AddTipDialog } from "@/app/components/AddTipDialog";
 import { EditPickModal } from "@/app/components/EditPickModal";
 import { DeletePickModal } from "@/app/components/DeletePickModal";
 import { TrendingUp, Circle, Plus, Minus, ChevronLeft, MapPin, Clock, Heart } from "lucide-react";
-import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/app/context/AuthContext";
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { cn, formatMatchTime } from "@/app/components/ui/utils";
 import { ProbabilityGraph } from "@/app/components/ProbabilityGraph";
+import { useMatch } from "@/app/hooks/useMatch";
+import { useFavorites } from "@/app/hooks/useFavorites";
+import { useToggleFavorite } from "@/app/hooks/useToggleFavorite";
+import { useUserPick } from "@/app/hooks/useUserPick";
+import { useSavePick } from "@/app/hooks/useSavePick";
+import { useDeletePick } from "@/app/hooks/useDeletePick";
 
 export function MatchDetailScreen() {
   const location = useLocation();
   const navigate = useNavigate();
   const { id } = useParams();
   const { user } = useAuth();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [match, setMatch] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
-  const [isFavorite, setIsFavorite] = useState(false);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [userPick, setUserPick] = useState<any>(null);
+
+  const { data: match, isLoading } = useMatch(id);
+  const { favoriteIds } = useFavorites();
+  const toggleFav = useToggleFavorite();
+  const { data: userPick } = useUserPick(id);
+  const savePick = useSavePick();
+  const deletePick = useDeletePick();
+
+  const isFavorite = id ? favoriteIds.has(id) : false;
 
   const [betAmount, setBetAmount] = useState("38.75");
   const [odds, setOdds] = useState("1.50");
@@ -31,125 +38,42 @@ export function MatchDetailScreen() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
 
-  const fetchMatch = async () => {
-      if (!id) return;
-      
-      try {
-        const { data, error } = await supabase
-          .from("matches")
-          .select(`
-            *,
-            leagues ( name, country, logo_url ),
-            odds (*),
-            tips (*)
-          `)
-          .eq("id", id)
-          .single();
-
-        if (error) throw error;
-        setMatch(data);
-
-        // Sync latest match data on open using external_id if available
-        if (data?.external_id) {
-           import("@/lib/backend").then(({ ingestMatch }) => ingestMatch(data.external_id));
-        }
-
-        if (user) {
-          const { data: favData } = await supabase
-            .from("favorites")
-            .select("id")
-            .eq("user_id", user.id)
-            .eq("match_id", id)
-            .maybeSingle();
-          setIsFavorite(!!favData);
-
-          const { data: pickData } = await supabase
-             .from("picks")
-             .select("*")
-             .eq("user_id", user.id)
-             .eq("match_id", id)
-             .maybeSingle();
-          
-          if (pickData) {
-            setUserPick(pickData);
-            setBetAmount(pickData.stake?.toString() || "");
-            setOdds(pickData.odds.toString());
-            setSelection(pickData.selection);
-          }
-        }
-      } catch (error) {
-        console.error("Error fetching match:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
+  // Sync form state when userPick loads
   useEffect(() => {
-    fetchMatch();
-  }, [id, user]);
+    if (userPick) {
+      setBetAmount(userPick.stake?.toString() || "");
+      setOdds(userPick.odds.toString());
+      setSelection(userPick.selection);
+    }
+  }, [userPick]);
 
-  const toggleFavorite = async (e?: React.MouseEvent) => {
+  const toggleFavorite = (e?: React.MouseEvent) => {
     e?.stopPropagation();
     if (!user || !id) {
-       navigate("/login", { state: { from: location } });
-       return;
+      navigate("/login", { state: { from: location } });
+      return;
     }
-    const newState = !isFavorite;
-    setIsFavorite(newState);
-    try {
-      if (newState) {
-        await supabase.from("favorites").insert({ user_id: user.id, match_id: id });
-      } else {
-        await supabase.from("favorites").delete().eq("user_id", user.id).eq("match_id", id);
-      }
-    } catch (error) {
-      console.error("Error toggling favorite:", error);
-      setIsFavorite(!newState);
-    }
+    toggleFav.mutate({ matchId: id, isFavorite });
   };
 
-  const handleSavePick = async () => {
+  const handleSavePick = () => {
     if (!user) { navigate("/login"); return; }
-    if (!id) return;
-    if (!selection) return;
-
-    try {
-      if (userPick) {
-        const { data, error } = await supabase.from('picks').update({
-            selection,
-            odds: parseFloat(odds),
-            stake: parseFloat(betAmount)
-        }).eq('id', userPick.id).select().single();
-        if (error) throw error;
-        setUserPick(data);
-        setShowEditModal(false);
-      } else {
-        const { data, error } = await supabase.from('picks').insert({
-            user_id: user.id,
-            match_id: id,
-            selection: selection,
-            odds: parseFloat(odds),
-            stake: parseFloat(betAmount),
-            status: 'PENDING'
-        }).select().single();
-        if (error) throw error;
-        setUserPick(data);
-      }
-    } catch (err) {
-      console.error("Error saving pick:", err);
-    }
+    if (!id || !selection) return;
+    savePick.mutate({
+      matchId: id,
+      selection,
+      odds: parseFloat(odds),
+      stake: parseFloat(betAmount),
+      existingPickId: userPick?.id,
+    });
+    setShowEditModal(false);
   };
 
-  const handleDeletePick = async () => {
+  const handleDeletePick = () => {
     if (!userPick) return;
-    try {
-        await supabase.from('picks').delete().eq('id', userPick.id);
-        setUserPick(null);
-        setSelection(null);
-        setShowDeleteModal(false);
-    } catch (err) {
-        console.error("Error deleting pick:", err);
-    }
+    deletePick.mutate(userPick.id);
+    setSelection(null);
+    setShowDeleteModal(false);
   };
 
   const incrementAmount = () => setBetAmount((parseFloat(betAmount) + 5).toFixed(2));
@@ -158,28 +82,32 @@ export function MatchDetailScreen() {
     if (val > 5) setBetAmount((val - 5).toFixed(2));
   };
 
-  if (loading) return <div className="min-h-screen bg-[#dae1e9] flex items-center justify-center text-[#3e4855]">Loading match details...</div>;
+  if (isLoading) return <div className="min-h-screen bg-[#dae1e9] flex items-center justify-center text-[#3e4855]">Loading match details...</div>;
   if (!match) return <div className="min-h-screen bg-[#dae1e9] flex items-center justify-center text-[#3e4855]">Match not found</div>;
 
-  const homeTeamName = match.home_team?.name || "Home Team";
-  const homeTeamLogo = match.home_team?.logo || match.home_team?.logo_url;
-  const awayTeamName = match.away_team?.name || "Away Team";
-  const awayTeamLogo = match.away_team?.logo || match.away_team?.logo_url;
+  const homeTeam = match.home_team as { name?: string; logo?: string; logo_url?: string } | null;
+  const awayTeam = match.away_team as { name?: string; logo?: string; logo_url?: string } | null;
+  const venue = match.venue as { city?: string; name?: string } | null;
+  const homeTeamName = homeTeam?.name || "Home Team";
+  const homeTeamLogo = homeTeam?.logo || homeTeam?.logo_url;
+  const awayTeamName = awayTeam?.name || "Away Team";
+  const awayTeamLogo = awayTeam?.logo || awayTeam?.logo_url;
   const leagueName = match.leagues?.name || "Unknown League";
   const leagueLogo = match.leagues?.logo_url;
   const matchTime = formatMatchTime(match.start_time);
-  const matchLocation = match.venue?.city ? `${match.venue.city}, ${match.venue.name || ''}` : (match.leagues?.country || "Location");
-  
+  const matchLocation = venue?.city ? `${venue.city}, ${venue.name || ''}` : (match.leagues?.country || "Location");
+
   // Handle odds whether returned as array or single object
-  const matchOdds = Array.isArray(match.odds) ? match.odds[0] : match.odds;
+  const rawOdds = Array.isArray(match.odds) ? match.odds[0] : match.odds;
+  const matchOdds = rawOdds ? { home_win: rawOdds.home_win ?? 0, draw: rawOdds.draw ?? 0, away_win: rawOdds.away_win ?? 0 } : null;
 
   return (
     <div className="bg-[#dae1e9] min-h-screen flex flex-col w-full max-w-7xl mx-auto relative pb-24">
       <Header />
-      
+
       {/* Back Button & Title */}
        <div className="px-4 mt-4 flex items-center gap-4 w-full max-w-3xl mx-auto">
-        <button 
+        <button
           onClick={() => navigate(-1)}
           className="size-10 bg-white rounded-full flex items-center justify-center shadow-sm hover:bg-gray-50 transition-colors"
         >
@@ -191,10 +119,10 @@ export function MatchDetailScreen() {
       </div>
 
       <div className="flex-1 px-4 mt-6 space-y-4 w-full max-w-3xl mx-auto">
-        
+
         {/* Main Combined Card */}
         <div className="bg-white rounded-[20px] shadow-[0px_13px_36px_0px_rgba(80,82,113,0.2)] p-6">
-          
+
           {/* League Info */}
           <div className="relative flex justify-center items-center mb-4">
             <div className="flex items-center gap-2">
@@ -215,7 +143,6 @@ export function MatchDetailScreen() {
             </div>
           </div>
 
-
           {/* Teams Row with Form */}
           <div className="grid grid-cols-[1fr_auto_1fr] items-start gap-4 mb-8">
              {/* Home Team */}
@@ -223,11 +150,9 @@ export function MatchDetailScreen() {
                 <div className="size-[64px] rounded-full bg-[#f0f2f5] flex items-center justify-center mb-3 relative">
                     {homeTeamLogo && <img src={homeTeamLogo} alt={homeTeamName} className="size-[48px] object-contain" />}
                     <div className="absolute -bottom-1 -right-1 bg-white rounded-full border border-gray-100 p-0.5">
-                       {/* Optional icon overlay */}
                     </div>
                 </div>
                 <p className="font-semibold text-[13px] text-[#3e4855] text-center leading-tight mb-2">{homeTeamName}</p>
-                {/* Form Guide */}
                 {match.home_form && (
                   <div className="flex gap-1">
                     {match.home_form.split("").slice(0,5).map((r: string, i: number) => {
@@ -235,7 +160,7 @@ export function MatchDetailScreen() {
                         if (r === 'W') bgClass = "bg-green-100 text-green-700";
                         else if (r === 'L') bgClass = "bg-red-100 text-red-700";
                         else if (r === 'D') bgClass = "bg-gray-200 text-gray-700";
-                        
+
                         return (
                           <div key={i} className={cn("size-4 rounded-[4px] flex items-center justify-center text-[9px] font-bold", bgClass)}>
                             {r}
@@ -257,7 +182,6 @@ export function MatchDetailScreen() {
                     {awayTeamLogo && <img src={awayTeamLogo} alt={awayTeamName} className="size-[48px] object-contain" />}
                 </div>
                 <p className="font-semibold text-[13px] text-[#3e4855] text-center leading-tight mb-2">{awayTeamName}</p>
-                {/* Form Guide */}
                 {match.away_form && (
                   <div className="flex gap-1">
                     {match.away_form.split("").slice(0,5).map((r: string, i: number) => {
@@ -265,7 +189,7 @@ export function MatchDetailScreen() {
                         if (r === 'W') bgClass = "bg-green-100 text-green-700";
                         else if (r === 'L') bgClass = "bg-red-100 text-red-700";
                         else if (r === 'D') bgClass = "bg-gray-200 text-gray-700";
-                        
+
                         return (
                           <div key={i} className={cn("size-4 rounded-[4px] flex items-center justify-center text-[9px] font-bold", bgClass)}>
                             {r}
@@ -279,7 +203,7 @@ export function MatchDetailScreen() {
 
           {/* Donut Charts / Odds Row */}
           {matchOdds ? (
-             <ProbabilityGraph 
+             <ProbabilityGraph
                odds={matchOdds}
                selection={selection}
                onSelect={(s, o) => {
@@ -333,7 +257,7 @@ export function MatchDetailScreen() {
                       <Minus className="size-3 cursor-pointer text-gray-400 hover:text-gray-600" onClick={decrementAmount} />
                   </div>
                </div>
-               
+
                {/* % Box */}
                <div className="border border-[#dae1e9] rounded-lg px-3 py-2 flex items-center justify-between w-24">
                   <span className="font-bold text-[#3e4855]">1.5%</span>
@@ -350,7 +274,7 @@ export function MatchDetailScreen() {
                 </div>
              </div>
 
-             <button 
+             <button
                 onClick={handleSavePick}
                 disabled={!selection}
                 className={cn(
@@ -367,15 +291,15 @@ export function MatchDetailScreen() {
         {/* Admin: Add Tip (from Mission Control) */}
         {(location.state as any)?.fromMissionControl && (
             <div className="flex justify-center mt-4">
-                <AddTipDialog 
-                    match={match} 
-                    existingTip={match.tips?.[0]} 
-                    onSave={fetchMatch} 
+                <AddTipDialog
+                    match={match}
+                    existingTip={match.tips?.[0]}
+                    onSave={() => {}}
                 />
             </div>
         )}
 
-        {/* Favorite Button (Floating or integrated?) - keeping it clean for now, maybe add to header */}
+        {/* Favorite Button */}
         <div className="flex justify-center mt-4 mb-2">
             <button onClick={toggleFavorite} className="flex items-center gap-2 text-[#505d6f] font-medium text-sm hover:text-[#3e4855]">
                 <Heart className={cn("size-4", isFavorite ? "fill-red-500 text-red-500" : "")} />
@@ -383,7 +307,7 @@ export function MatchDetailScreen() {
             </button>
         </div>
       </div>
-       
+
       <div className="fixed bottom-0 left-0 right-0 w-full max-w-7xl mx-auto z-50">
         <BottomNav />
       </div>
